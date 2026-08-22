@@ -18,7 +18,23 @@ chmod +x scripts/*.sh
 
 این اسکریپت فقط volume کد را عوض می‌کند. PostgreSQL، والت و فایل‌های کاربران پاک نمی‌شوند. `bootstrap.sh` را دوباره اجرا نکنید.
 
-اگر اسکریپت را هنوز ندارید، معادل دستی:
+اگر روی **ویندوز / PowerShell** هستید (نه Git Bash)، `|| true` کار نمی‌کند. از این استفاده کنید:
+
+```powershell
+.\scripts\apply-source.ps1
+```
+
+یا دستی:
+
+```powershell
+docker compose build backend frontend update-agent
+docker compose stop backend frontend update-agent nginx
+docker volume ls
+docker volume rm -f <نام-volume-که-live_app-دارد>
+docker volume rm -f <نام-volume-که-live_frontend-دارد>
+docker compose up -d --build
+```
+
 
 ```bash
 docker compose build backend frontend update-agent
