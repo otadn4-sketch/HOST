@@ -4,7 +4,33 @@
 
 لینوکس، Docker Engine، Docker Compose v2، حداقل پیشنهادی شیت: ۲ vCPU / ۴GB RAM / ۱۰۰GB SSD (ظرفیت نهایی با کارفرما).
 
-## مراحل
+## اعمال سورس (zip گیت‌هاب یا git pull)
+
+کپی فایل‌های zip روی دیسک، برنامهٔ در حال اجرا را عوض نمی‌کند. کانتینرها کد را از volumeهای `live_app` و `live_frontend` می‌خوانند، نه مستقیم از پوشهٔ پروژه. پنل «به‌روزرسانی سامانه» هم روی همین نصب فعلی خراب است و جایگزین این مرحله نیست.
+
+در **همان پوشه‌ای که بار اول `bootstrap.sh` اجرا شده** (فایل `.env` همان‌جا بماند):
+
+```bash
+# اگر zip گیت‌هاب را باز کرده‌اید، محتوای آن را روی همین پوشه بریزید؛ .env و infra/nginx/certs را نگه دارید.
+chmod +x scripts/*.sh
+./scripts/apply-source.sh
+```
+
+این اسکریپت فقط volume کد را عوض می‌کند. PostgreSQL، والت و فایل‌های کاربران پاک نمی‌شوند. `bootstrap.sh` را دوباره اجرا نکنید.
+
+اگر اسکریپت را هنوز ندارید، معادل دستی:
+
+```bash
+docker compose build backend frontend update-agent
+docker compose stop backend frontend update-agent nginx
+docker compose rm -f backend frontend update-agent
+docker volume rm -f "$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Name}}{{end}}{{end}}' "$(docker compose ps -aq backend)")" || true
+docker volume rm -f "$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/usr/share/nginx/html"}}{{.Name}}{{end}}{{end}}' "$(docker compose ps -aq frontend)")" || true
+docker compose up -d --build
+```
+
+
+## مراحل نصب نخست
 
 1. `git clone` یا انتقال bundle آفلاین
 2. `./scripts/bootstrap.sh`
