@@ -54,6 +54,7 @@ services:
       - staging:/var/lib/eytan/staging
       - releases:/var/lib/eytan/releases
       - live_app:/app
+      - live_frontend:/overlay/frontend
     depends_on:
       db:
         condition: service_healthy

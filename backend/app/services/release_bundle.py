@@ -230,7 +230,7 @@ def _synthetic_manifest(dest: Path, extracted: list[str], changelog: str = "") -
         "name": "eytan-vault",
         "version": version,
         "compatible_from": "0.0.0",
-        "migration_id": "001_initial",
+        "migration_id": "",
         "changelog": changelog
         or "بسته منبع بارگذاری‌شده توسط مدیر سامانه (فایل‌های غیرمجاز نادیده گرفته شد).",
         "files": files,

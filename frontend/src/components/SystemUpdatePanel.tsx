@@ -3,6 +3,8 @@ import { RefreshCw, ShieldCheck, UploadCloud } from 'lucide-react';
 import { DataApi, uploadUpdateBundle } from '../services/api';
 import { SystemUpdateItem } from '../types';
 
+const RETRYABLE = new Set(['validated', 'failed', 'rolled_back', 'installing']);
+
 export const SystemUpdatePanel: React.FC = () => {
   const [items, setItems] = useState<SystemUpdateItem[]>([]);
   const [current, setCurrent] = useState('');
@@ -26,7 +28,12 @@ export const SystemUpdatePanel: React.FC = () => {
     setInfo('');
     try {
       const res = await uploadUpdateBundle(file);
-      setInfo(`بسته نسخه ${res.update.version} بررسی شد. وضعیت: ${res.update.status}`);
+      const st = res.update.status;
+      if (st === 'validated') {
+        setInfo(`بسته نسخه ${res.update.version} بررسی شد و آماده نصب است.`);
+      } else {
+        setError(res.update.error || `وضعیت بسته: ${st}`);
+      }
       await load();
     } catch (e: any) {
       setError(e.message || 'بارگذاری بسته ناموفق بود.');
@@ -36,14 +43,18 @@ export const SystemUpdatePanel: React.FC = () => {
   };
 
   const confirm = async (id: string) => {
-    if (!window.confirm('نصب این بسته باعث ورود به حالت نگهداری، تهیه بکاپ و تعویض اتمیک نسخه می‌شود. ادامه می‌دهید؟')) return;
+    if (!window.confirm('نصب این بسته کد سامانه را روی همین سرور اعمال می‌کند. ادامه می‌دهید؟')) return;
     setBusy(true);
+    setError('');
+    setInfo('در حال نصب…');
     try {
-      await DataApi.confirmUpdate(id);
-      setInfo('نصب با موفقیت انجام شد.');
+      const res: any = await DataApi.confirmUpdate(id);
+      const notes = Array.isArray(res.notes) ? res.notes.join('؛ ') : '';
+      setInfo(notes ? `نصب انجام شد. ${notes}` : 'نصب با موفقیت انجام شد. چند ثانیه بعد سامانه تازه می‌شود.');
       await load();
     } catch (e: any) {
       setError(e.message || 'نصب ناموفق بود.');
+      await load().catch(() => undefined);
     } finally {
       setBusy(false);
     }
@@ -57,16 +68,17 @@ export const SystemUpdatePanel: React.FC = () => {
           به‌روزرسانی سامانه
         </h1>
         <p className="text-xs text-[#5B6573] mt-2 leading-6">
-          فایل zip پروژه یا بستهٔ امضاشده را بارگذاری کنید. پوشهٔ تو در تو، docker-compose و install.sh نادیده گرفته می‌شوند و فقط کد سامانه اعمال می‌شود.
-          پس از وضعیت <strong>validated</strong> دکمهٔ «تأیید نهایی و نصب» را بزنید.
+          فایل zip پروژه را بارگذاری کنید. پوشهٔ تو در تو، docker-compose و install.sh نادیده گرفته می‌شوند.
+          پس از بررسی موفق، «تأیید نهایی و نصب» را بزنید. اگر نصب ناموفق بود می‌توانید دوباره تلاش کنید.
+          رابط کاربری فقط با وجود <span className="font-mono">frontend/dist</span> عوض می‌شود.
           نسخه فعلی: <strong>{current || '—'}</strong>
         </p>
       </div>
-      {error && <div className="bg-[#FDEBEC] text-[#991B1B] text-xs p-3 rounded-xl">{error}</div>}
+      {error && <div className="bg-[#FDEBEC] text-[#991B1B] text-xs p-3 rounded-xl whitespace-pre-wrap">{error}</div>}
       {info && <div className="bg-[#E4F4EA] text-[#166534] text-xs p-3 rounded-xl">{info}</div>}
       <label className="bg-white rounded-2xl p-6 border border-dashed border-[#8B5A2B] flex flex-col items-center gap-2 cursor-pointer">
         <UploadCloud className="w-8 h-8 text-[#4A2C17]" />
-        <span className="text-xs font-bold">بارگذاری بسته .zip امضاشده به محیط staging</span>
+        <span className="text-xs font-bold">بارگذاری بسته .zip به محیط staging</span>
         <input type="file" accept=".zip,.eytan.zip" className="hidden" disabled={busy} onChange={(e) => e.target.files && onUpload(e.target.files[0])} />
       </label>
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
@@ -75,7 +87,7 @@ export const SystemUpdatePanel: React.FC = () => {
             <tr>
               <th className="p-3 text-right">نسخه</th>
               <th className="p-3 text-right">وضعیت</th>
-              <th className="p-3 text-right">changelog</th>
+              <th className="p-3 text-right">توضیح / خطا</th>
               <th className="p-3 text-right">عملیات</th>
             </tr>
           </thead>
@@ -84,12 +96,11 @@ export const SystemUpdatePanel: React.FC = () => {
               <tr key={u.id} className="border-t border-slate-100">
                 <td className="p-3 font-mono">{u.version}</td>
                 <td className="p-3">{u.status}</td>
-                <td className="p-3">{u.changelog}</td>
+                <td className="p-3 text-[#6B5344]">{u.error || u.changelog || '—'}</td>
                 <td className="p-3">
-                  {u.status === 'rejected' && <span className="text-red-700">{u.error}</span>}
-                  {u.status === 'validated' && (
+                  {RETRYABLE.has(u.status) && (
                     <button disabled={busy} onClick={() => confirm(u.id)} className="px-3 py-1.5 bg-[#4A2C17] text-white rounded-lg">
-                      تأیید نهایی و نصب
+                      {u.status === 'validated' ? 'تأیید نهایی و نصب' : 'تلاش دوباره برای نصب'}
                     </button>
                   )}
                 </td>
@@ -100,7 +111,7 @@ export const SystemUpdatePanel: React.FC = () => {
       </div>
       <p className="text-[11px] text-[#5B6573] flex items-center gap-1">
         <ShieldCheck className="w-3.5 h-3.5" />
-        نصب توسط update-agent جداگانه انجام می‌شود؛ اپلیکیشن وب به Docker socket دسترسی ندارد.
+        نصب روی همین سرور انجام می‌شود و اسکریپت داخل zip اجرا نمی‌شود.
       </p>
     </div>
   );
