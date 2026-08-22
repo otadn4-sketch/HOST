@@ -68,3 +68,36 @@ def test_rejects_hash_mismatch(tmp_path: Path):
     z = _bundle(tmp_path, sk, bad_hash=True)
     result = verify_and_extract(z, sk.verify_key.encode().hex(), tmp_path / "out5")
     assert not result.ok
+
+
+def test_accepts_nested_source_zip_without_manifest(tmp_path: Path):
+    root = tmp_path / "proj"
+    (root / "backend" / "app").mkdir(parents=True)
+    (root / "backend" / "app" / "hello.py").write_text("x = 1\n")
+    (root / "VERSION").write_text("1.1.0\n")
+    (root / "docker-compose.yml").write_text("services: {}\n")
+    zpath = tmp_path / "src.zip"
+    with zipfile.ZipFile(zpath, "w") as zf:
+        zf.write(root / "VERSION", "HOST-folder/VERSION")
+        zf.write(root / "backend" / "app" / "hello.py", "HOST-folder/backend/app/hello.py")
+        zf.write(root / "docker-compose.yml", "HOST-folder/docker-compose.yml")
+    dest = tmp_path / "out-src"
+    result = verify_and_extract(zpath, "", dest, allow_unsigned=True)
+    assert result.ok, result.errors
+    assert (dest / "VERSION").read_text().strip() == "1.1.0"
+    assert (dest / "backend" / "app" / "hello.py").exists()
+    assert not (dest / "docker-compose.yml").exists()
+    assert result.manifest["version"] == "1.1.0"
+
+
+def test_nested_signed_manifest_is_found(tmp_path: Path):
+    sk = SigningKey.generate()
+    inner = _bundle(tmp_path, sk)
+    nested = tmp_path / "nested.zip"
+    with zipfile.ZipFile(inner) as src, zipfile.ZipFile(nested, "w") as dst:
+        for info in src.infolist():
+            dst.writestr("eytan-1.1.0/" + info.filename, src.read(info.filename))
+    dest = tmp_path / "out-nested"
+    result = verify_and_extract(nested, sk.verify_key.encode().hex(), dest, allow_unsigned=True)
+    assert result.ok, result.errors
+    assert (dest / "frontend" / "index.html").exists()

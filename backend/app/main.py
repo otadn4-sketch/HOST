@@ -59,6 +59,7 @@ def create_app(overrides: dict | None = None) -> FastAPI:
     @app.on_event("startup")
     def _startup() -> None:
         from app.api import deps
+        from app.services.update_watch import start_update_stamp_watch
 
         engine = make_engine(settings.database_url)
         Base.metadata.create_all(engine)
@@ -76,6 +77,7 @@ def create_app(overrides: dict | None = None) -> FastAPI:
             db.commit()
         finally:
             db.close()
+        start_update_stamp_watch()
 
     return app
 

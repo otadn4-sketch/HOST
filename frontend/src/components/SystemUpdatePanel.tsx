@@ -57,7 +57,8 @@ export const SystemUpdatePanel: React.FC = () => {
           به‌روزرسانی سامانه
         </h1>
         <p className="text-xs text-[#5B6573] mt-2 leading-6">
-          فقط بستهٔ امضاشدهٔ انتشار (release bundle) پذیرفته می‌شود. ZIP خام، install.sh و docker-compose داخل بسته اجرا نمی‌شوند.
+          فایل zip پروژه یا بستهٔ امضاشده را بارگذاری کنید. پوشهٔ تو در تو، docker-compose و install.sh نادیده گرفته می‌شوند و فقط کد سامانه اعمال می‌شود.
+          پس از وضعیت <strong>validated</strong> دکمهٔ «تأیید نهایی و نصب» را بزنید.
           نسخه فعلی: <strong>{current || '—'}</strong>
         </p>
       </div>
@@ -83,8 +84,9 @@ export const SystemUpdatePanel: React.FC = () => {
               <tr key={u.id} className="border-t border-slate-100">
                 <td className="p-3 font-mono">{u.version}</td>
                 <td className="p-3">{u.status}</td>
-                <td className="p-3">{u.changelog || u.error}</td>
+                <td className="p-3">{u.changelog}</td>
                 <td className="p-3">
+                  {u.status === 'rejected' && <span className="text-red-700">{u.error}</span>}
                   {u.status === 'validated' && (
                     <button disabled={busy} onClick={() => confirm(u.id)} className="px-3 py-1.5 bg-[#12345B] text-white rounded-lg">
                       تأیید نهایی و نصب

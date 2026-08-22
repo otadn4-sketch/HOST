@@ -53,6 +53,7 @@ services:
       - backups:/var/lib/eytan/backups
       - staging:/var/lib/eytan/staging
       - releases:/var/lib/eytan/releases
+      - live_app:/app
     depends_on:
       db:
         condition: service_healthy
@@ -76,6 +77,8 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+    volumes:
+      - live_frontend:/usr/share/nginx/html
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
       interval: 20s
@@ -101,10 +104,14 @@ services:
       RELEASES_PATH: /var/lib/eytan/releases
       CURRENT_RELEASE_PATH: /var/lib/eytan/releases/current
       HEALTH_URL: http://backend:8000/api/health
+      OVERLAY_APP_PATH: /overlay/app
+      OVERLAY_FRONTEND_PATH: /overlay/frontend
     volumes:
       - staging:/var/lib/eytan/staging
       - releases:/var/lib/eytan/releases
       - backups:/var/lib/eytan/backups
+      - live_app:/overlay/app
+      - live_frontend:/overlay/frontend
     depends_on:
       - backend
     healthcheck:
@@ -157,6 +164,8 @@ volumes:
   backups:
   staging:
   releases:
+  live_app:
+  live_frontend:
 
 networks:
   internal:

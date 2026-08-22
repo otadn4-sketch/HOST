@@ -66,7 +66,7 @@ async def upload_bundle(
     staging_file = settings.staging_path / staging_name
     size, digest = await stream_to_quarantine(file, staging_file, 200 * 1024 * 1024)
     extract_dir = settings.staging_path / f"extracted-{uuid.uuid4().hex}"
-    result = verify_and_extract(staging_file, settings.update_public_key, extract_dir)
+    result = verify_and_extract(staging_file, settings.update_public_key, extract_dir, allow_unsigned=True)
     status = "validated" if result.ok else "rejected"
     update = SystemUpdate(
         version=(result.manifest or {}).get("version", "unknown"),
@@ -80,8 +80,8 @@ async def upload_bundle(
         migration_id=(result.manifest or {}).get("migration_id", ""),
         manifest=result.manifest or {},
     )
-    if result.ok:
-        current = current_version(Path("."))
+    if result.ok and not (result.manifest or {}).get("unsigned_source"):
+        current = current_version(Path("/app") if Path("/app/VERSION").exists() else Path("."))
         if not is_compatible(current, update.compatible_from or "0.0.0", update.version):
             update.status = "rejected"
             update.error = f"ناسازگار با نسخه فعلی {current}"

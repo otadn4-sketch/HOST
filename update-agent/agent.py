@@ -31,6 +31,8 @@ BACKUP_PATH = Path(os.environ.get("BACKUP_PATH", "/var/lib/eytan/backups"))
 HEALTH_URL = os.environ.get("HEALTH_URL", "http://backend:8000/api/health")
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 BACKEND_CONTAINER_WORKDIR = Path(os.environ.get("BACKEND_CODE_PATH", "/var/lib/eytan/releases/current/backend"))
+OVERLAY_APP = Path(os.environ.get("OVERLAY_APP_PATH", "/overlay/app"))
+OVERLAY_FRONTEND = Path(os.environ.get("OVERLAY_FRONTEND_PATH", "/overlay/frontend"))
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -41,6 +43,43 @@ class InstallIn(BaseModel):
     version: str
     migration_id: str
     initiated_by: str
+
+
+def _sync_tree(src: Path, dest: Path) -> None:
+    dest.mkdir(parents=True, exist_ok=True)
+    for child in list(dest.iterdir()):
+        if child.name in {".", ".."}:
+            continue
+        if child.is_dir() and not child.is_symlink():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
+    if src.is_dir():
+        shutil.copytree(src, dest, dirs_exist_ok=True)
+    elif src.is_file():
+        shutil.copy2(src, dest)
+
+
+def _apply_live_overlays(work: Path) -> None:
+    app_src = work / "backend" / "app"
+    if app_src.is_dir() and OVERLAY_APP.exists():
+        _sync_tree(app_src, OVERLAY_APP / "app")
+        alembic_src = work / "backend" / "alembic" / "versions"
+        if alembic_src.is_dir():
+            target = OVERLAY_APP / "alembic" / "versions"
+            target.mkdir(parents=True, exist_ok=True)
+            _sync_tree(alembic_src, target)
+        version_src = work / "VERSION"
+        if version_src.is_file():
+            shutil.copy2(version_src, OVERLAY_APP / "VERSION")
+    frontend_src = work / "frontend"
+    dist_index = frontend_src / "dist" / "index.html"
+    root_index = frontend_src / "index.html"
+    if OVERLAY_FRONTEND.exists():
+        if dist_index.is_file():
+            _sync_tree(frontend_src / "dist", OVERLAY_FRONTEND)
+        elif root_index.is_file() and not (frontend_src / "src").is_dir() and not (frontend_src / "package.json").is_file():
+            _sync_tree(frontend_src, OVERLAY_FRONTEND)
 
 
 def _auth(token: str | None) -> None:
@@ -63,7 +102,7 @@ def install(payload: InstallIn, x_update_token: str | None = Header(default=None
     work = STAGING / f"install-{payload.update_id}"
     if work.exists():
         shutil.rmtree(work)
-    result = verify_and_extract(bundle, PUBLIC_KEY, work)
+    result = verify_and_extract(bundle, PUBLIC_KEY, work, allow_unsigned=True)
     if not result.ok:
         return {"ok": False, "error": "; ".join(result.errors), "rolled_back": False}
 
@@ -86,6 +125,10 @@ def install(payload: InstallIn, x_update_token: str | None = Header(default=None
                     shutil.copytree(src, target)
                 else:
                     shutil.copy2(src, target)
+
+        _apply_live_overlays(work)
+        if OVERLAY_APP.exists():
+            (OVERLAY_APP / ".update-stamp").write_text(str(time.time()), encoding="utf-8")
 
         # atomic symlink swap of current release
         tmp_link = RELEASES / f"current-{payload.version}.tmp"
