@@ -74,7 +74,11 @@ def evaluate_file_access(user: User, file: FileObject, permissions: list[FilePer
         access.can_view = True
         access.can_manage = True
         access.can_upload = True
-        access.can_download = file.scan_status == "clean"
+        reason = (file.quarantine_reason or "")
+        malware = file.scan_status == "quarantined" and (
+            "شناسایی بدافزار" in reason or "malware" in reason.lower()
+        )
+        access.can_download = not malware
         return access
 
     if user.id == file.uploader_id:

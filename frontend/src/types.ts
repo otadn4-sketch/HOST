@@ -121,6 +121,8 @@ export interface DashboardData {
     users_total: number;
     users_active: number;
     views: number;
+    views_total?: number;
+    views_unique?: number;
     downloads: number;
     files_total: number;
     quarantined: number;
@@ -138,6 +140,9 @@ export interface DashboardData {
   event_by_action?: Array<{ name: string; count: number }>;
   event_by_severity?: Array<{ name: string; count: number }>;
   event_by_user?: Array<{ name: string; count: number }>;
+  file_viewer_chart?: Array<Record<string, string | number>>;
+  file_viewer_users?: string[];
+  file_viewers?: Array<{ file: string; user: string; visits: number }>;
 }
 
 export interface SystemUpdateItem {

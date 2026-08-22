@@ -47,7 +47,7 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
   }, [logs, searchTerm, severityFilter, actionFilter, currentUser.role]);
 
   const isAdmin = currentUser.role === 'system_admin';
-  const colors = ['#12345B', '#2E5E8C', '#896B17', '#991B1B', '#166534'];
+  const colors = ['#4A2C17', '#8B5A2B', '#896B17', '#991B1B', '#166534'];
   const byAction = Object.entries(filteredLogs.reduce<Record<string, number>>((acc, l) => {
     acc[l.actionTitle] = (acc[l.actionTitle] || 0) + 1;
     return acc;
@@ -169,7 +169,8 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
           <option value="login_success">ورود موفق</option>
           <option value="login_failed">ورود ناموفق</option>
           <option value="file_download">دریافت فایل</option>
-          <option value="file_view">مشاهده متادیتا</option>
+          <option value="file_preview">پیش‌نمایش محتوا</option>
+          <option value="file_view">مشاهده جزئیات فایل</option>
           <option value="file_upload">بارگذاری فایل</option>
           <option value="file_quarantined">قرنطینه بدافزار</option>
           <option value="permission_change">تغییر سطح دسترسی</option>
@@ -203,7 +204,7 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
                 <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="count" fill="#12345B" radius={6} />
+                <Bar dataKey="count" fill="#4A2C17" radius={6} />
               </BarChart>
             </ResponsiveContainer>
           </div>

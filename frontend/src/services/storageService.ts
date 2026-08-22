@@ -40,7 +40,7 @@ export class StorageService {
   }
 
   static canUserDownloadFile(_user: User, file: FileItem): boolean {
-    return Boolean(file.canDownload) && file.scanStatus === 'clean';
+    return Boolean(file.canDownload);
   }
 
   static canUserManageFile(_user: User, file: FileItem): boolean {

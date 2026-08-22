@@ -35,6 +35,7 @@ import { StorageService, formatFileSize, formatDateTimeFa } from '../services/st
 import { DataApi, downloadFile, mapFile } from '../services/api';
 import { AiSummarizeModal } from './AiSummarizeModal';
 import { FileAccessEditor } from './FileAccessEditor';
+import { FilePreviewModal } from './FilePreviewModal';
 
 interface FileRepositoryProps {
   files: FileItem[];
@@ -45,6 +46,7 @@ interface FileRepositoryProps {
   onSearchChange: (q: string) => void;
   onRefresh: () => void;
   initialFileId?: string | null;
+  onInitialFileHandled?: () => void;
 }
 
 export const FileRepository: React.FC<FileRepositoryProps> = ({
@@ -56,6 +58,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
   onSearchChange,
   onRefresh,
   initialFileId,
+  onInitialFileHandled,
 }) => {
   const isAdmin = currentUser.role === 'system_admin';
   const [selectedDept, setSelectedDept] = useState<string>('all');
@@ -64,6 +67,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
   const [selectedScanStatus, setSelectedScanStatus] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
+  const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
   const [summarizingFile, setSummarizingFile] = useState<FileItem | null>(null);
   const [editingFile, setEditingFile] = useState<FileItem | null>(null);
   const [copiedHash, setCopiedHash] = useState(false);
@@ -73,9 +77,10 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
     if (!initialFileId) return;
     const found = files.find((f) => f.id === initialFileId);
     if (found) {
-      setSelectedFile(found);
+      setPreviewFile(found);
+      onInitialFileHandled?.();
     }
-  }, [initialFileId, files]);
+  }, [initialFileId, files, onInitialFileHandled]);
 
   // Extract unique topics
   const topics = useMemo(() => {
@@ -153,7 +158,13 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
     setTimeout(() => setFeedbackMessage(null), 4000);
   };
 
-  const handleOpenFileDetails = async (file: FileItem) => {
+  const handleOpenPreview = (file: FileItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setPreviewFile(file);
+  };
+
+  const handleOpenFileDetails = async (file: FileItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     try {
       const res = await DataApi.file(file.id);
       setSelectedFile(mapFile(res.file));
@@ -185,7 +196,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
       case 'public':
         return { label: 'عمومی', class: 'bg-slate-100 text-slate-700 border-slate-200' };
       case 'internal':
-        return { label: 'سازمانی داخلی', class: 'bg-blue-50 text-blue-800 border-blue-200' };
+        return { label: 'سازمانی داخلی', class: 'bg-[#EFE6D6] text-[#4A2C17] border-[#E8D9C4]' };
       case 'confidential':
         return { label: 'محرمانه', class: 'bg-amber-50 text-amber-800 border-amber-200' };
       case 'secret':
@@ -219,8 +230,8 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-600" />
-              <span>مخزن فایل‌ها، گزارش‌ها و اسناد امن</span>
+              <FileText className="w-5 h-5 text-[#8B5A2B]" />
+              <span>مخزن فایل‌ها، گزارش‌ها و اسناد</span>
             </h1>
           </div>
 
@@ -257,7 +268,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
             <select
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value)}
-              className="w-full bg-slate-100 text-xs text-slate-800 p-2 rounded-lg border border-slate-200 focus:border-blue-600 focus:bg-white focus:outline-hidden"
+              className="w-full bg-slate-100 text-xs text-slate-800 p-2 rounded-lg border border-slate-200 focus:border-[#8B5A2B] focus:bg-white focus:outline-hidden"
             >
               <option value="all">همه واحدها</option>
               {departments.map(d => (
@@ -272,7 +283,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
             <select
               value={selectedTopic}
               onChange={(e) => setSelectedTopic(e.target.value)}
-              className="w-full bg-slate-100 text-xs text-slate-800 p-2 rounded-lg border border-slate-200 focus:border-blue-600 focus:bg-white focus:outline-hidden"
+              className="w-full bg-slate-100 text-xs text-slate-800 p-2 rounded-lg border border-slate-200 focus:border-[#8B5A2B] focus:bg-white focus:outline-hidden"
             >
               <option value="all">همه موضوعات</option>
               {topics.map(t => (
@@ -287,7 +298,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
             <select
               value={selectedClassification}
               onChange={(e) => setSelectedClassification(e.target.value)}
-              className="w-full bg-slate-100 text-xs text-slate-800 p-2 rounded-lg border border-slate-200 focus:border-blue-600 focus:bg-white focus:outline-hidden"
+              className="w-full bg-slate-100 text-xs text-slate-800 p-2 rounded-lg border border-slate-200 focus:border-[#8B5A2B] focus:bg-white focus:outline-hidden"
             >
               <option value="all">همه سطوح</option>
               <option value="public">عمومی</option>
@@ -304,10 +315,11 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
             <select
               value={selectedScanStatus}
               onChange={(e) => setSelectedScanStatus(e.target.value)}
-              className="w-full bg-slate-100 text-xs text-slate-800 p-2 rounded-lg border border-slate-200 focus:border-blue-600 focus:bg-white focus:outline-hidden"
+              className="w-full bg-slate-100 text-xs text-slate-800 p-2 rounded-lg border border-slate-200 focus:border-[#8B5A2B] focus:bg-white focus:outline-hidden"
             >
               <option value="all">همه وضعیت‌ها</option>
               <option value="clean">سالم و تأییدشده (Clean)</option>
+              <option value="suspicious">مشکوک / اسکنر در دسترس نبود</option>
               <option value="quarantined">قرنطینه / مسدود (Quarantined)</option>
             </select>
           </div>
@@ -355,7 +367,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
                   return (
                     <tr
                       key={file.id}
-                      onClick={() => handleOpenFileDetails(file)}
+                      onClick={() => handleOpenPreview(file)}
                       className={`hover:bg-slate-50 cursor-pointer transition-colors ${
                         isQuarantined ? 'bg-red-50/40' : ''
                       }`}
@@ -363,12 +375,12 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
                       <td className="p-3.5 pr-6">
                         <div className="flex items-center gap-3">
                           <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                            isQuarantined ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-700'
+                            isQuarantined ? 'bg-red-100 text-red-700' : 'bg-[#EFE6D6] text-[#4A2C17]'
                           }`}>
                             <Icon className="w-5 h-5" />
                           </div>
                           <div className="max-w-xs">
-                            <p className="font-bold text-slate-900 hover:text-blue-600 line-clamp-1">
+                            <p className="font-bold text-slate-900 hover:text-[#8B5A2B] line-clamp-1">
                               {file.title}
                             </p>
                             <p className="text-[10px] text-slate-400 font-mono mt-0.5 line-clamp-1">
@@ -406,6 +418,11 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
                             <ShieldAlert className="w-3 h-3" />
                             <span>قرنطینه بدافزار</span>
                           </span>
+                        ) : file.scanStatus === 'suspicious' ? (
+                          <span className="text-[10px] bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full font-medium flex items-center gap-1 w-fit">
+                            <ShieldAlert className="w-3 h-3" />
+                            <span>مشکوک</span>
+                          </span>
                         ) : (
                           <span className="text-[10px] bg-green-100 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-medium flex items-center gap-1 w-fit">
                             <ShieldCheck className="w-3 h-3" />
@@ -424,17 +441,24 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
                         <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={(e) => { e.stopPropagation(); setSummarizingFile(file); }}
-                            className="p-1.5 text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-lg border border-blue-200/60"
+                            className="p-1.5 text-[#4A2C17] bg-[#EFE6D6] hover:bg-[#4A2C17] hover:text-white rounded-lg border border-[#E8D9C4]"
                             title="خلاصه‌سازی هوشمند"
                           >
                             <Sparkles className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleOpenFileDetails(file)}
-                            className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors"
-                            title="مشاهده جزئیات"
+                            onClick={(e) => handleOpenPreview(file, e)}
+                            className="p-1.5 text-slate-500 hover:text-[#8B5A2B] hover:bg-slate-100 rounded-lg transition-colors"
+                            title="پیش‌نمایش محتوا"
                           >
                             <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => handleOpenFileDetails(file, e)}
+                            className="p-1.5 text-slate-500 hover:text-[#8B5A2B] hover:bg-slate-100 rounded-lg transition-colors"
+                            title="جزئیات فایل"
+                          >
+                            <Info className="w-4 h-4" />
                           </button>
                           {canManage && (
                             <button
@@ -447,11 +471,11 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
                           )}
 
                           {/* Download Button */}
-                          {canDownload && !isQuarantined ? (
+                          {canDownload ? (
                             <button
                               onClick={(e) => handleDownload(file, e)}
-                              className="p-1.5 text-blue-600 hover:text-white hover:bg-blue-600 rounded-lg transition-colors"
-                              title="دریافت امن با بررسی توکن"
+                              className="p-1.5 text-[#8B5A2B] hover:text-white hover:bg-[#4A2C17] rounded-lg transition-colors"
+                              title="دریافت فایل"
                             >
                               <Download className="w-4 h-4" />
                             </button>
@@ -499,7 +523,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
             return (
               <div
                 key={file.id}
-                onClick={() => handleOpenFileDetails(file)}
+                onClick={() => handleOpenPreview(file)}
                 className={`bg-white rounded-2xl p-5 border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-4 ${
                   isQuarantined ? 'border-red-200 bg-red-50/20' : ''
                 }`}
@@ -507,7 +531,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                      isQuarantined ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-700'
+                      isQuarantined ? 'bg-red-100 text-red-700' : 'bg-[#EFE6D6] text-[#4A2C17]'
                     }`}>
                       <Icon className="w-5 h-5" />
                     </div>
@@ -517,7 +541,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
                   </div>
 
                   <div>
-                    <h3 className="font-bold text-sm text-slate-900 line-clamp-1 hover:text-blue-600">
+                    <h3 className="font-bold text-sm text-slate-900 line-clamp-1 hover:text-[#8B5A2B]">
                       {file.title}
                     </h3>
                     <p className="text-[11px] text-slate-400 font-mono mt-0.5 line-clamp-1">
@@ -546,8 +570,22 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
 
                   <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                     <button
+                      onClick={(e) => handleOpenPreview(file, e)}
+                      className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg"
+                      title="پیش‌نمایش محتوا"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => handleOpenFileDetails(file, e)}
+                      className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg"
+                      title="جزئیات فایل"
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                    </button>
+                    <button
                       onClick={(e) => { e.stopPropagation(); setSummarizingFile(file); }}
-                      className="px-2.5 py-1.5 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-lg flex items-center gap-1"
+                      className="px-2.5 py-1.5 text-xs bg-[#EFE6D6] text-[#4A2C17] border border-[#E8D9C4] rounded-lg flex items-center gap-1"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       خلاصه
@@ -561,10 +599,10 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
                     )}
-                    {canDownload && !isQuarantined ? (
+                    {canDownload ? (
                       <button
                         onClick={(e) => handleDownload(file, e)}
-                        className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-1 transition-colors font-medium shadow-xs"
+                        className="px-3 py-1.5 text-xs bg-[#4A2C17] hover:bg-[#3B2114] text-white rounded-lg flex items-center gap-1 transition-colors font-medium shadow-xs"
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span>دریافت</span>
@@ -603,7 +641,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
             <div className="flex items-start justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                  selectedFile.scanStatus === 'quarantined' ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-700'
+                  selectedFile.scanStatus === 'quarantined' ? 'bg-red-100 text-red-700' : 'bg-[#EFE6D6] text-[#4A2C17]'
                 }`}>
                   {React.createElement(getFileIcon(selectedFile.extension, selectedFile.scanStatus === 'quarantined'), { className: 'w-6 h-6' })}
                 </div>
@@ -633,6 +671,14 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
                 <div>
                   <p className="font-bold text-red-900">هشدار امنیتی: فایل در قرنطینه است</p>
                   <p className="mt-1 leading-relaxed">{selectedFile.quarantineReason}</p>
+                </div>
+              </div>
+            ) : selectedFile.scanStatus === 'suspicious' ? (
+              <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 flex items-start gap-3">
+                <ShieldAlert className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
+                <div>
+                  <p className="font-bold text-amber-900">وضعیت مشکوک: پویش کامل نشد</p>
+                  <p className="mt-1 leading-relaxed">{selectedFile.quarantineReason || 'اسکنر در دسترس نبود.'}</p>
                 </div>
               </div>
             ) : (
@@ -705,7 +751,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
             <div className="space-y-2 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-slate-900 flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-blue-600" />
+                  <Lock className="w-3.5 h-3.5 text-[#8B5A2B]" />
                   <span>مسیر فیزیکی ایزوله در ویندوز سرور (Non-Guessable Vault Path):</span>
                 </span>
               </div>
@@ -717,7 +763,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
                   <span className="font-bold text-slate-900 text-[11px]">هش یکپارچگی داده (SHA-256 Checksum):</span>
                   <button
                     onClick={() => copyToClipboard(selectedFile.checksumSha256)}
-                    className="text-[10px] text-blue-600 hover:underline flex items-center gap-1 font-medium"
+                    className="text-[10px] text-[#8B5A2B] hover:underline flex items-center gap-1 font-medium"
                   >
                     {copiedHash ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
                     <span>{copiedHash ? 'کپی شد' : 'کپی هش'}</span>
@@ -753,8 +799,15 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
 
               <div className="flex items-center gap-2">
                 <button
+                  onClick={() => setPreviewFile(selectedFile)}
+                  className="px-3.5 py-2 text-xs bg-[#EFE6D6] text-[#4A2C17] border border-[#E8D9C4] rounded-xl flex items-center gap-1.5 font-bold"
+                >
+                  <Eye className="w-4 h-4" />
+                  پیش‌نمایش
+                </button>
+                <button
                   onClick={() => setSummarizingFile(selectedFile)}
-                  className="px-3.5 py-2 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-xl flex items-center gap-1.5 font-bold"
+                  className="px-3.5 py-2 text-xs bg-[#EFE6D6] text-[#4A2C17] border border-[#E8D9C4] rounded-xl flex items-center gap-1.5 font-bold"
                 >
                   <Sparkles className="w-4 h-4" />
                   خلاصه هوشمند
@@ -775,13 +828,13 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
                   بستن
                 </button>
 
-                {StorageService.canUserDownloadFile(currentUser, selectedFile) && selectedFile.scanStatus !== 'quarantined' && (
+                {StorageService.canUserDownloadFile(currentUser, selectedFile) && (
                   <button
                     onClick={() => handleDownload(selectedFile)}
-                    className="px-4 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center gap-1.5 transition-colors font-medium shadow-xs"
+                    className="px-4 py-2 text-xs bg-[#4A2C17] hover:bg-[#3B2114] text-white rounded-xl flex items-center gap-1.5 transition-colors font-medium shadow-xs"
                   >
                     <Download className="w-4 h-4" />
-                    <span>دریافت امن فایل</span>
+                    <span>دریافت فایل</span>
                   </button>
                 )}
               </div>
@@ -792,6 +845,14 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
         </div>
       )}
 
+      {previewFile && (
+        <FilePreviewModal
+          file={previewFile}
+          currentUser={currentUser}
+          onClose={() => { setPreviewFile(null); onRefresh(); }}
+          onDownload={(f) => handleDownload(f)}
+        />
+      )}
       {summarizingFile && (
         <AiSummarizeModal
           file={summarizingFile}

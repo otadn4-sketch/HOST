@@ -15,6 +15,7 @@ import { AiSummarizeModal } from './components/AiSummarizeModal';
 import { AuthApi, DataApi, mapFile, mapGroup, mapLog, mapPolicy, mapUser } from './services/api';
 import { User, Department, FileItem, AuditLog, SystemSecurityPolicy } from './types';
 import { Lock } from 'lucide-react';
+import { COPYRIGHT_TEXT } from './branding';
 
 export default function App() {
   const [ready, setReady] = useState(false);
@@ -83,7 +84,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F2F4F7] text-[#1F2937] flex flex-col font-sans" dir="rtl">
+    <div className="min-h-screen bg-[#F7F1E8] text-[#3B2114] flex flex-col font-sans" dir="rtl">
       <Navbar
         currentUser={currentUser}
         onSearch={setSearchQuery}
@@ -124,6 +125,7 @@ export default function App() {
               onSearchChange={setSearchQuery}
               onRefresh={refreshData}
               initialFileId={openFileId}
+              onInitialFileHandled={() => setOpenFileId(null)}
             />
           )}
           {currentView === 'ai_chat' && (
@@ -178,9 +180,8 @@ export default function App() {
           )}
         </main>
       </div>
-      <footer className="bg-white border-t border-[#E8EEF5] px-6 py-3.5 flex flex-col sm:flex-row justify-between items-center text-[11px] text-[#5B6573] gap-2">
-        <div>تمامی حقوق محفوظ است © شبکه ایتان</div>
-        <div>سامانه خودمیزبان • بدون افشای داده امنیتی برای کاربران عادی</div>
+      <footer className="bg-white border-t border-[#E8D9C4] px-6 py-3.5 text-center text-[11px] text-[#6B5344]">
+        <div>{COPYRIGHT_TEXT}</div>
       </footer>
       <FileUploadModal
         isOpen={isUploadModalOpen}

@@ -17,6 +17,10 @@ function readCookie(name: string): string {
   return '';
 }
 
+export function csrfToken(): string {
+  return readCookie('eytan_csrf');
+}
+
 async function parseError(res: Response): Promise<string> {
   try {
     const body = await res.json();

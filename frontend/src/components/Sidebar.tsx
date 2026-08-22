@@ -50,7 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="w-64 bg-[#12345B] text-white border-l border-[#0d2744] flex flex-col justify-between shrink-0 min-h-[calc(100vh-4rem)] p-4">
+    <aside className="w-64 bg-[#4A2C17] text-white border-l border-[#3B2114] flex flex-col justify-between shrink-0 min-h-[calc(100vh-4rem)] p-4">
       <div className="space-y-5">
         <div>
           {isViewer ? (
@@ -64,7 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ) : (
             <button
               onClick={onOpenUploadModal}
-              className="w-full flex items-center justify-center gap-2 bg-[#2E5E8C] hover:bg-[#3a6fa3] text-white font-bold py-2.5 px-4 rounded-xl text-sm"
+              className="w-full flex items-center justify-center gap-2 bg-[#8B5A2B] hover:bg-[#A67C52] text-white font-bold py-2.5 px-4 rounded-xl text-sm"
             >
               <UploadCloud className="w-4 h-4" />
               بارگذاری فایل جدید
@@ -73,7 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         <nav className="space-y-1.5">
-          <p className="px-3 text-[11px] font-bold text-[#E8EEF5]/70 mb-2">بخش‌های سامانه</p>
+          <p className="px-3 text-[11px] font-bold text-[#EFE6D6]/70 mb-2">بخش‌های سامانه</p>
           {mainMenuItems.filter((i) => i.visible).map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
@@ -82,7 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 key={item.id}
                 onClick={() => onNavigate(item.id)}
                 className={`w-full flex items-center justify-between p-3 rounded-lg text-xs font-medium ${
-                  isActive ? 'bg-[#2E5E8C] text-white font-bold' : 'text-[#E8EEF5] hover:bg-white/10'
+                  isActive ? 'bg-[#8B5A2B] text-white font-bold' : 'text-[#EFE6D6] hover:bg-white/10'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -98,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                 className={`w-full flex items-center justify-between p-3 rounded-lg text-xs ${
-                  isSettingsActive && !isSettingsOpen ? 'bg-white/10 text-white' : 'text-[#E8EEF5] hover:bg-white/10'
+                  isSettingsActive && !isSettingsOpen ? 'bg-white/10 text-white' : 'text-[#EFE6D6] hover:bg-white/10'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -117,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         key={item.id}
                         onClick={() => onNavigate(item.id)}
                         className={`w-full flex items-center gap-2.5 p-2.5 rounded-lg text-xs ${
-                          isActive ? 'bg-[#2E5E8C] text-white font-bold' : 'text-[#E8EEF5] hover:bg-white/10'
+                          isActive ? 'bg-[#8B5A2B] text-white font-bold' : 'text-[#EFE6D6] hover:bg-white/10'
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5" />
@@ -134,7 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <div className="mt-4 pt-4 border-t border-white/10">
         <p className="text-xs font-bold truncate">{currentUser.fullName}</p>
-        <p className="text-[10px] text-[#E8EEF5]/70 truncate">
+        <p className="text-[10px] text-[#EFE6D6]/70 truncate">
           {currentUser.orgRoleName || currentUser.departmentName}
         </p>
       </div>

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import uuid
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
@@ -14,7 +15,7 @@ from app.models.entities import FileObject, FilePermission, User, utcnow
 from app.schemas import FileMetaPatchIn
 from app.security.rbac import can_upload, evaluate_file_access, is_admin
 from app.services.audit import write_audit
-from app.services.files import get_visible_file, ingest_file, serialize_file, stream_to_quarantine, vault_abs
+from app.services.files import get_visible_file, ingest_file, is_malware_hit, serialize_file, stored_file_path, stream_to_quarantine
 from app.services.policy import get_or_create_policy
 
 router = APIRouter(prefix="/api/files", tags=["files"])
@@ -191,11 +192,9 @@ def download_file(
             target_id=file_id,
         )
         raise HTTPException(status_code=404, detail="فایل یافت نشد.")
-    if file.scan_status != "clean":
+    if is_malware_hit(file):
         raise HTTPException(status_code=403, detail="فایل قرنطینه یا مشکوک قابل دریافت نیست.")
-    path = vault_abs(settings, file.storage_relpath)
-    if not path.is_file():
-        raise HTTPException(status_code=404, detail="فایل یافت نشد.")
+    path = stored_file_path(settings, file)
     file.download_count += 1
     write_audit(
         db,
@@ -207,26 +206,46 @@ def download_file(
         details="دریافت از طریق endpoint مجاز",
         request=request,
     )
+    return _stream_file(file, path, inline=False)
 
-    def iterator():
-        with path.open("rb") as fh:
-            while True:
-                chunk = fh.read(1024 * 1024)
-                if not chunk:
-                    break
-                yield chunk
 
-    filename = Path(file.original_name).name.replace('"', "")
-    return StreamingResponse(
-        iterator(),
-        media_type=file.detected_mime or "application/octet-stream",
-        headers={
-            "Content-Disposition": f'attachment; filename="{filename}"',
-            "X-Content-Type-Options": "nosniff",
-            "Cache-Control": "no-store",
-            "Content-Length": str(file.size_bytes),
-        },
+@router.get("/{file_id}/preview")
+def preview_file(
+    file_id: str,
+    request: Request,
+    db: DBSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+    settings: Settings = Depends(get_settings),
+):
+    file, access = get_visible_file(db, user, file_id)
+    if file is None or not access.can_view:
+        write_audit(
+            db,
+            user=user,
+            action="suspicious_activity",
+            target_resource=file_id,
+            details="تلاش غیرمجاز برای پیش‌نمایش فایل",
+            severity="warning",
+            request=request,
+            target_type="file",
+            target_id=file_id,
+        )
+        raise HTTPException(status_code=404, detail="فایل یافت نشد.")
+    if is_malware_hit(file) and not is_admin(user):
+        raise HTTPException(status_code=403, detail="این فایل قابل پیش‌نمایش نیست.")
+    path = stored_file_path(settings, file)
+    file.view_count += 1
+    write_audit(
+        db,
+        user=user,
+        action="file_preview",
+        target_resource=file.title,
+        target_type="file",
+        target_id=file.id,
+        details="پیش‌نمایش محتوای فایل",
+        request=request,
     )
+    return _stream_file(file, path, inline=True)
 
 
 @router.patch("/{file_id}")
@@ -297,10 +316,7 @@ def delete_file(
         raise HTTPException(status_code=404, detail="فایل یافت نشد.")
     file.is_deleted = True
     try:
-        if file.scan_status == "clean":
-            vault_abs(settings, file.storage_relpath).unlink(missing_ok=True)
-        else:
-            (settings.quarantine_path / file.storage_relpath).unlink(missing_ok=True)
+        stored_file_path(settings, file).unlink(missing_ok=True)
     except Exception:
         pass
     write_audit(
@@ -315,3 +331,31 @@ def delete_file(
         request=request,
     )
     return {"ok": True}
+
+
+def _stream_file(file: FileObject, path: Path, *, inline: bool) -> StreamingResponse:
+    def iterator():
+        with path.open("rb") as fh:
+            while True:
+                chunk = fh.read(1024 * 1024)
+                if not chunk:
+                    break
+                yield chunk
+
+    filename = Path(file.original_name).name.replace('"', "")
+    ascii_name = filename.encode("ascii", "replace").decode("ascii") or "file"
+    utf_name = quote(filename)
+    disposition = "inline" if inline else "attachment"
+    mime = file.detected_mime or file.mime_type or "application/octet-stream"
+    if inline and (file.extension or "").lower() in {"txt", "csv", "md", "json", "log", "xml", "html", "htm"}:
+        mime = "text/plain; charset=utf-8"
+    return StreamingResponse(
+        iterator(),
+        media_type=mime,
+        headers={
+            "Content-Disposition": f"{disposition}; filename=\"{ascii_name}\"; filename*=UTF-8''{utf_name}",
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "no-store",
+            "Content-Length": str(file.size_bytes),
+        },
+    )

@@ -30,6 +30,25 @@ def vault_abs(settings: Settings, relpath: str) -> Path:
     return target
 
 
+def is_malware_hit(file: FileObject) -> bool:
+    reason = (file.quarantine_reason or "")
+    return file.scan_status == "quarantined" and ("شناسایی بدافزار" in reason or "malware" in reason.lower())
+
+
+def stored_file_path(settings: Settings, file: FileObject) -> Path:
+    try:
+        vault = vault_abs(settings, file.storage_relpath)
+        if vault.is_file():
+            return vault
+    except HTTPException:
+        pass
+    qbase = settings.quarantine_path.resolve()
+    qpath = (settings.quarantine_path / file.storage_relpath).resolve()
+    if str(qpath).startswith(str(qbase)) and qpath.is_file():
+        return qpath
+    raise HTTPException(status_code=404, detail="فایل یافت نشد.")
+
+
 async def stream_to_quarantine(
     upload: UploadFile, dest: Path, max_size: int
 ) -> tuple[int, str]:
@@ -179,14 +198,10 @@ def ingest_file(
                 scan_status = "quarantined"
                 quarantine_reason = f"شناسایی بدافزار: {result.signature}"
         except ClamAVError as exc:
-            if settings.scan_fail_closed:
-                scan_status = "quarantined"
-                quarantine_reason = f"پویش بدافزار در دسترس نبود؛ فایل قرنطینه شد ({exc})"
-            else:
-                scan_status = "suspicious"
-                quarantine_reason = str(exc)
+            scan_status = "suspicious"
+            quarantine_reason = f"پویش بدافزار در دسترس نبود ({exc})"
 
-    if scan_status == "clean":
+    if scan_status in {"clean", "suspicious"}:
         rel = stored_name
         dest = settings.vault_path / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -259,7 +274,7 @@ def ingest_file(
 
 
 def _cleanup(settings: Settings, relpath: str, scan_status: str) -> None:
-    base = settings.vault_path if scan_status == "clean" else settings.quarantine_path
+    base = settings.vault_path if scan_status in {"clean", "suspicious"} else settings.quarantine_path
     path = (base / relpath)
     path.unlink(missing_ok=True)
 

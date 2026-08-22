@@ -20,7 +20,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
         response.headers["Cache-Control"] = response.headers.get("Cache-Control", "no-store")
         response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
+            "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; "
+            "frame-src 'self' blob:; style-src 'self' 'unsafe-inline'; "
             "script-src 'self'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
         )
         if request.url.scheme == "https":
@@ -34,7 +35,7 @@ def create_app(overrides: dict | None = None) -> FastAPI:
         for key, value in overrides.items():
             setattr(settings, key, value)
 
-    app = FastAPI(title="سامانه اشتراک‌گذاری امن فایل ایتان", docs_url=None, redoc_url=None, openapi_url=None)
+    app = FastAPI(title="سامانه اشتراک‌گذاری فایل شبکه کانون‌های تفکر ایران «ایتان»", docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(
         CORSMiddleware,

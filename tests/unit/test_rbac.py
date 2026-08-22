@@ -41,10 +41,18 @@ def test_dashboard_admin_only():
 
 def test_quarantine_not_downloadable():
     admin = _user("system_admin", "admin")
-    f = _file(scan_status="quarantined", uploader_id="u2")
+    f = _file(scan_status="quarantined", uploader_id="u2", quarantine_reason="شناسایی بدافزار: Eicar-Test-Signature")
     access = evaluate_file_access(admin, f, [])
     assert access.can_view
     assert not access.can_download
+
+
+def test_admin_can_download_scanner_unavailable():
+    admin = _user("system_admin", "admin")
+    f = _file(scan_status="suspicious", uploader_id="u2", quarantine_reason="پویش بدافزار در دسترس نبود")
+    access = evaluate_file_access(admin, f, [])
+    assert access.can_view
+    assert access.can_download
 
 
 def test_explicit_permission():

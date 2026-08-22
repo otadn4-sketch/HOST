@@ -9,6 +9,7 @@ import {
   Users,
 } from 'lucide-react';
 import { User, UserRole } from '../types';
+import { APP_NAME } from '../branding';
 
 interface NavbarProps {
   currentUser: User;
@@ -32,11 +33,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   const getRoleBadge = (role: UserRole) => {
     switch (role) {
       case 'system_admin':
-        return { label: 'مدیر سامانه', bg: 'bg-[#12345B] text-white', icon: ShieldCheck };
+        return { label: 'مدیر سامانه', bg: 'bg-[#4A2C17] text-white', icon: ShieldCheck };
       case 'group_admin':
-        return { label: 'مدیر گروه', bg: 'bg-[#2E5E8C] text-white', icon: Users };
+        return { label: 'مدیر گروه', bg: 'bg-[#8B5A2B] text-white', icon: Users };
       case 'user':
-        return { label: 'کاربر سازمانی', bg: 'bg-[#E8EEF5] text-[#12345B] border border-[#2E5E8C]/20', icon: UserIcon };
+        return { label: 'کاربر سازمانی', bg: 'bg-[#EFE6D6] text-[#4A2C17] border border-[#8B5A2B]/20', icon: UserIcon };
       case 'viewer':
         return { label: 'مشاهده‌گر (فقط‌خواندنی)', bg: 'bg-[#FFF5D6] text-[#896B17] border border-[#896B17]/20', icon: Lock };
       default:
@@ -48,17 +49,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   const BadgeIcon = badge.icon;
 
   return (
-    <header className="bg-white border-b border-[#E8EEF5] sticky top-0 z-30">
+    <header className="bg-white border-b border-[#E8D9C4] sticky top-0 z-30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-reverse space-x-3 cursor-pointer" onClick={() => onNavigate(currentUser.role === 'user' || currentUser.role === 'viewer' ? 'user_portal' : 'files')}>
-            <div className="w-9 h-9 rounded-lg bg-[#12345B] flex items-center justify-center text-white font-bold text-base">E</div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-base text-[#12345B] tracking-tight">سامانه اشتراک‌گذاری امن فایل</span>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#E8EEF5] text-[#12345B] border border-[#E8EEF5] hidden sm:inline-block">شبکه ایتان</span>
-              </div>
-              <p className="text-[11px] text-[#5B6573] mt-0.5">پرتال سازمانی شبکه ایتان</p>
+            <div className="w-9 h-9 rounded-lg bg-[#4A2C17] flex items-center justify-center text-white font-bold text-base shrink-0">E</div>
+            <div className="min-w-0">
+              <span className="font-bold text-xs sm:text-sm text-[#4A2C17] tracking-tight leading-snug block">{APP_NAME}</span>
+              <p className="text-[11px] text-[#6B5344] mt-0.5">پرتال سازمانی شبکه کانون‌های تفکر ایران «ایتان»</p>
             </div>
           </div>
 
@@ -69,7 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 value={searchQuery}
                 onChange={(e) => onSearch(e.target.value)}
                 placeholder="جست‌وجوی فایل، موضوع یا منبع..."
-                className="w-full bg-[#F2F4F7] text-sm text-[#1F2937] placeholder-[#5B6573] pr-10 pl-4 py-2 rounded-full border border-[#E8EEF5] focus:border-[#2E5E8C] focus:bg-white focus:outline-hidden"
+                className="w-full bg-[#F7F1E8] text-sm text-[#1F2937] placeholder-[#5B6573] pr-10 pl-4 py-2 rounded-full border border-[#EFE6D6] focus:border-[#8B5A2B] focus:bg-white focus:outline-hidden"
               />
               <Search className="w-4 h-4 text-[#5B6573] absolute right-3.5 top-3" />
             </div>
@@ -79,13 +77,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="w-10 h-10 flex items-center justify-center bg-[#F2F4F7] rounded-full border border-[#E8EEF5] text-[#12345B]"
+                className="w-10 h-10 flex items-center justify-center bg-[#F7F1E8] rounded-full border border-[#EFE6D6] text-[#4A2C17]"
               >
                 <Bell className="w-4 h-4" />
               </button>
               {showNotifications && (
-                <div className="absolute left-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-[#E8EEF5] p-4 z-50">
-                  <p className="text-xs font-bold text-[#12345B] mb-2">
+                <div className="absolute left-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-[#EFE6D6] p-4 z-50">
+                  <p className="text-xs font-bold text-[#4A2C17] mb-2">
                     {isAdmin ? 'اعلان‌ها از رخدادهای سامانه خوانده می‌شوند.' : 'اعلان‌های مربوط به پرونده‌های در دسترس شما.'}
                   </p>
                   <button
@@ -93,7 +91,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       setShowNotifications(false);
                       onNavigate(isAdmin || currentUser.role === 'group_admin' ? 'audit_logs' : 'user_portal');
                     }}
-                    className="text-xs text-[#2E5E8C] font-bold"
+                    className="text-xs text-[#8B5A2B] font-bold"
                   >
                     {isAdmin || currentUser.role === 'group_admin' ? 'مشاهده رخدادها' : 'بازگشت به پرتال'}
                   </button>
@@ -102,8 +100,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             <div className="relative">
-              <button onClick={() => setShowMenu(!showMenu)} className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#E8EEF5] bg-white">
-                <div className="w-8 h-8 rounded-full bg-[#12345B] text-white flex items-center justify-center font-bold text-xs">
+              <button onClick={() => setShowMenu(!showMenu)} className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#EFE6D6] bg-white">
+                <div className="w-8 h-8 rounded-full bg-[#4A2C17] text-white flex items-center justify-center font-bold text-xs">
                   {currentUser.fullName.split(' ')[0][0]}
                 </div>
                 <div className="text-right hidden sm:block">
@@ -116,10 +114,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </span>
               </button>
               {showMenu && (
-                <div className="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#E8EEF5] p-3 z-50">
+                <div className="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#EFE6D6] p-3 z-50">
                   <button
                     onClick={() => { setShowMenu(false); onNavigate('user_portal'); }}
-                    className="w-full text-right text-xs text-[#12345B] hover:bg-[#F2F4F7] p-2 rounded-lg mb-1"
+                    className="w-full text-right text-xs text-[#4A2C17] hover:bg-[#F7F1E8] p-2 rounded-lg mb-1"
                   >
                     پرتال کاربری
                   </button>

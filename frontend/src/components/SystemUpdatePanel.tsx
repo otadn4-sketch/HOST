@@ -52,7 +52,7 @@ export const SystemUpdatePanel: React.FC = () => {
   return (
     <div className="space-y-5">
       <div className="bg-white rounded-2xl p-5 border border-slate-200">
-        <h1 className="text-lg font-bold text-[#12345B] flex items-center gap-2">
+        <h1 className="text-lg font-bold text-[#4A2C17] flex items-center gap-2">
           <RefreshCw className="w-5 h-5" />
           به‌روزرسانی سامانه
         </h1>
@@ -64,14 +64,14 @@ export const SystemUpdatePanel: React.FC = () => {
       </div>
       {error && <div className="bg-[#FDEBEC] text-[#991B1B] text-xs p-3 rounded-xl">{error}</div>}
       {info && <div className="bg-[#E4F4EA] text-[#166534] text-xs p-3 rounded-xl">{info}</div>}
-      <label className="bg-white rounded-2xl p-6 border border-dashed border-[#2E5E8C] flex flex-col items-center gap-2 cursor-pointer">
-        <UploadCloud className="w-8 h-8 text-[#12345B]" />
+      <label className="bg-white rounded-2xl p-6 border border-dashed border-[#8B5A2B] flex flex-col items-center gap-2 cursor-pointer">
+        <UploadCloud className="w-8 h-8 text-[#4A2C17]" />
         <span className="text-xs font-bold">بارگذاری بسته .zip امضاشده به محیط staging</span>
         <input type="file" accept=".zip,.eytan.zip" className="hidden" disabled={busy} onChange={(e) => e.target.files && onUpload(e.target.files[0])} />
       </label>
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <table className="w-full text-xs">
-          <thead className="bg-[#E8EEF5] text-[#12345B]">
+          <thead className="bg-[#EFE6D6] text-[#4A2C17]">
             <tr>
               <th className="p-3 text-right">نسخه</th>
               <th className="p-3 text-right">وضعیت</th>
@@ -88,7 +88,7 @@ export const SystemUpdatePanel: React.FC = () => {
                 <td className="p-3">
                   {u.status === 'rejected' && <span className="text-red-700">{u.error}</span>}
                   {u.status === 'validated' && (
-                    <button disabled={busy} onClick={() => confirm(u.id)} className="px-3 py-1.5 bg-[#12345B] text-white rounded-lg">
+                    <button disabled={busy} onClick={() => confirm(u.id)} className="px-3 py-1.5 bg-[#4A2C17] text-white rounded-lg">
                       تأیید نهایی و نصب
                     </button>
                   )}

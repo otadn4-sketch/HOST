@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, ShieldCheck } from 'lucide-react';
 import { ApiError, AuthApi } from '../services/api';
+import { APP_NAME } from '../branding';
 
 interface LoginViewProps {
   onLoggedIn: () => void;
@@ -61,13 +62,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoggedIn }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F2F4F7] flex items-center justify-center p-4" dir="rtl">
-      <div className="w-full max-w-md bg-white rounded-2xl border border-[#E8EEF5] shadow-sm p-8 space-y-6">
+    <div className="min-h-screen bg-[#F7F1E8] flex items-center justify-center p-4" dir="rtl">
+      <div className="w-full max-w-md bg-white rounded-2xl border border-[#EFE6D6] shadow-sm p-8 space-y-6">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-[#12345B] text-white flex items-center justify-center font-bold">E</div>
+          <div className="w-11 h-11 rounded-xl bg-[#4A2C17] text-white flex items-center justify-center font-bold">E</div>
           <div>
-            <h1 className="text-base font-bold text-[#12345B]">سامانه اشتراک‌گذاری امن فایل</h1>
-            <p className="text-[11px] text-[#5B6573]">شبکه ایتان • ورود محلی روی سرور اختصاصی</p>
+            <h1 className="text-sm font-bold text-[#4A2C17] leading-6">{APP_NAME}</h1>
+            <p className="text-[11px] text-[#6B5344]">ورود محلی روی سرور اختصاصی</p>
           </div>
         </div>
 
@@ -78,17 +79,17 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoggedIn }) => {
           <form onSubmit={submitLogin} className="space-y-3 text-xs">
             <label className="block">
               <span className="font-medium text-[#5B6573]">نام کاربری</span>
-              <input value={username} onChange={(e) => setUsername(e.target.value)} className="mt-1 w-full p-2.5 rounded-xl bg-[#F2F4F7] border border-[#E8EEF5] focus:border-[#2E5E8C] outline-none" />
+              <input value={username} onChange={(e) => setUsername(e.target.value)} className="mt-1 w-full p-2.5 rounded-xl bg-[#F7F1E8] border border-[#EFE6D6] focus:border-[#8B5A2B] outline-none" />
             </label>
             <label className="block">
               <span className="font-medium text-[#5B6573]">گذرواژه</span>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 w-full p-2.5 rounded-xl bg-[#F2F4F7] border border-[#E8EEF5] focus:border-[#2E5E8C] outline-none" />
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 w-full p-2.5 rounded-xl bg-[#F7F1E8] border border-[#EFE6D6] focus:border-[#8B5A2B] outline-none" />
             </label>
-            <button disabled={busy} className="w-full py-2.5 rounded-xl bg-[#12345B] text-white font-bold flex items-center justify-center gap-2">
+            <button disabled={busy} className="w-full py-2.5 rounded-xl bg-[#4A2C17] text-white font-bold flex items-center justify-center gap-2">
               <Lock className="w-4 h-4" />
               ورود امن
             </button>
-            <button type="button" onClick={() => setMode('recovery')} className="w-full text-[#2E5E8C] font-medium">
+            <button type="button" onClick={() => setMode('recovery')} className="w-full text-[#8B5A2B] font-medium">
               بازیابی دسترسی
             </button>
           </form>
@@ -99,23 +100,23 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoggedIn }) => {
             <p className="text-[#5B6573] leading-6">
               درخواست بازیابی برای مدیر سامانه ثبت می‌شود. توکن یک‌بارمصرف فقط از مسیر برون‌خط (تماس با مدیر) دریافت می‌گردد.
             </p>
-            <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="نام کاربری" className="w-full p-2.5 rounded-xl bg-[#F2F4F7] border border-[#E8EEF5]" />
-            <button disabled={busy} className="w-full py-2.5 rounded-xl bg-[#12345B] text-white font-bold">ارسال درخواست</button>
-            <button type="button" onClick={() => setMode('login')} className="w-full text-[#2E5E8C]">بازگشت به ورود</button>
+            <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="نام کاربری" className="w-full p-2.5 rounded-xl bg-[#F7F1E8] border border-[#EFE6D6]" />
+            <button disabled={busy} className="w-full py-2.5 rounded-xl bg-[#4A2C17] text-white font-bold">ارسال درخواست</button>
+            <button type="button" onClick={() => setMode('login')} className="w-full text-[#8B5A2B]">بازگشت به ورود</button>
           </form>
         )}
 
         {mode === 'confirm' && (
           <form onSubmit={submitConfirm} className="space-y-3 text-xs">
-            <input value={token} onChange={(e) => setToken(e.target.value)} placeholder="توکن بازیابی صادرشده توسط مدیر" className="w-full p-2.5 rounded-xl bg-[#F2F4F7] border border-[#E8EEF5]" />
-            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="گذرواژه جدید" className="w-full p-2.5 rounded-xl bg-[#F2F4F7] border border-[#E8EEF5]" />
-            <button disabled={busy} className="w-full py-2.5 rounded-xl bg-[#12345B] text-white font-bold">ثبت گذرواژه جدید</button>
-            <button type="button" onClick={() => setMode('login')} className="w-full text-[#2E5E8C]">بازگشت به ورود</button>
+            <input value={token} onChange={(e) => setToken(e.target.value)} placeholder="توکن بازیابی صادرشده توسط مدیر" className="w-full p-2.5 rounded-xl bg-[#F7F1E8] border border-[#EFE6D6]" />
+            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="گذرواژه جدید" className="w-full p-2.5 rounded-xl bg-[#F7F1E8] border border-[#EFE6D6]" />
+            <button disabled={busy} className="w-full py-2.5 rounded-xl bg-[#4A2C17] text-white font-bold">ثبت گذرواژه جدید</button>
+            <button type="button" onClick={() => setMode('login')} className="w-full text-[#8B5A2B]">بازگشت به ورود</button>
           </form>
         )}
 
         <p className="text-[10px] text-[#5B6573] flex items-center gap-1">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#12345B]" />
+          <ShieldCheck className="w-3.5 h-3.5 text-[#4A2C17]" />
           نشست HttpOnly، حفاظت CSRF و قفل موقت پس از تلاش ناموفق
         </p>
       </div>

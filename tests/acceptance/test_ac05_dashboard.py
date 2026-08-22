@@ -11,6 +11,9 @@ def test_ac05_dashboard_admin_only(client):
     data = res.json()
     assert "kpis" in data
     assert "users_total" in data["kpis"]
+    assert "views_total" in data["kpis"]
+    assert "views_unique" in data["kpis"]
+    assert "file_viewer_chart" in data
     assert "events" in data
     client.post("/api/auth/logout", headers=h)
     login(client, "mgr")
