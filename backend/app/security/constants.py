@@ -1,0 +1,96 @@
+DANGEROUS_EXTENSIONS = {
+    "exe",
+    "bat",
+    "cmd",
+    "com",
+    "scr",
+    "pif",
+    "msi",
+    "dll",
+    "sys",
+    "drv",
+    "cpl",
+    "sh",
+    "bash",
+    "zsh",
+    "csh",
+    "ps1",
+    "psm1",
+    "vbs",
+    "vbe",
+    "js",
+    "jse",
+    "jar",
+    "py",
+    "pyc",
+    "rb",
+    "pl",
+    "php",
+    "asp",
+    "aspx",
+    "cgi",
+    "elf",
+    "bin",
+    "so",
+    "dylib",
+    "apk",
+    "ipa",
+    "lnk",
+    "reg",
+    "hta",
+    "wsf",
+    "wsh",
+}
+
+DEFAULT_ALLOWED_EXTENSIONS = ["pdf", "docx", "xlsx", "pptx", "txt"]
+
+OFFICE_MACRO_HINTS = (
+    "word/vbaProject.bin",
+    "xl/vbaProject.bin",
+    "ppt/vbaProject.bin",
+    "vbaProject.bin",
+)
+
+MAGIC_MAP = {
+    b"%PDF": ("pdf", "application/pdf"),
+    b"PK\x03\x04": ("zip", "application/zip"),
+    b"PK\x05\x06": ("zip", "application/zip"),
+    b"MZ": ("exe", "application/x-msdownload"),
+    b"\x7fELF": ("elf", "application/x-elf"),
+    b"\xca\xfe\xba\xbe": ("bin", "application/octet-stream"),
+    b"\xce\xfa\xed\xfe": ("bin", "application/octet-stream"),
+}
+
+OFFICE_CONTENT_TYPES = {
+    "word/": ("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+    "xl/": ("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+    "ppt/": ("pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"),
+}
+
+ROLE_TITLES = {
+    "system_admin": "مدیر سامانه",
+    "group_admin": "مدیر گروه",
+    "user": "کاربر",
+    "viewer": "مشاهده‌گر",
+}
+
+ACTION_TITLES = {
+    "login_success": "ورود موفق",
+    "login_failed": "تلاش ناموفق ورود",
+    "logout": "خروج امن",
+    "file_view": "مشاهده فایل",
+    "file_download": "دریافت فایل",
+    "file_upload": "بارگذاری فایل",
+    "file_quarantined": "قرنطینه فایل",
+    "permission_change": "تغییر مجوز",
+    "user_created": "ایجاد کاربر",
+    "user_status_changed": "تغییر وضعیت کاربر",
+    "group_updated": "به‌روزرسانی گروه",
+    "password_reset_request": "درخواست بازیابی دسترسی",
+    "password_reset": "بازنشانی گذرواژه",
+    "security_policy_change": "تغییر سیاست امنیتی",
+    "suspicious_activity": "فعالیت مشکوک",
+    "system_update": "به‌روزرسانی سامانه",
+    "backup_created": "تهیه نسخه پشتیبان",
+    "account_locked": "قفل موقت حساب",
+}
