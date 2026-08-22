@@ -35,17 +35,6 @@ docker volume rm -f <نام-volume-که-live_frontend-دارد>
 docker compose up -d --build
 ```
 
-
-```bash
-docker compose build backend frontend update-agent
-docker compose stop backend frontend update-agent nginx
-docker compose rm -f backend frontend update-agent
-docker volume rm -f "$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Name}}{{end}}{{end}}' "$(docker compose ps -aq backend)")" || true
-docker volume rm -f "$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/usr/share/nginx/html"}}{{.Name}}{{end}}{{end}}' "$(docker compose ps -aq frontend)")" || true
-docker compose up -d --build
-```
-
-
 ## مراحل نصب نخست
 
 1. `git clone` یا انتقال bundle آفلاین

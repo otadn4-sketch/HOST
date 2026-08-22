@@ -15,6 +15,13 @@ chmod +x scripts/*.sh
 
 این اسکریپت ایمیج را از سورس همین پوشه می‌سازد، فقط volumeهای `live_app` و `live_frontend` را عوض می‌کند و سرویس را بالا می‌آورد. دیتابیس، والت و فایل‌های کاربران پاک نمی‌شوند.
 
-`./scripts/bootstrap.sh` را برای به‌روزرسانی دوباره اجرا نکنید.
+روی ویندوز / PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\apply-source.ps1
+```
+
+یا volumeها را با `docker volume ls` پیدا کنید و `docker volume rm -f` بزنید؛ `|| true` مال لینوکس است و در PowerShell خطا می‌دهد.
+
 
 پس از موفقیت، نسخه در خروجی اسکریپت و در پنل به‌روزرسانی باید با `VERSION` سورس یکی باشد.
