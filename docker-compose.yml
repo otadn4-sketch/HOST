@@ -1,0 +1,163 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [internal]
+
+  init-dirs:
+    image: busybox:1.36
+    command: ["sh", "-c", "mkdir -p /var/lib/eytan/vault /var/lib/eytan/quarantine /var/lib/eytan/backups /var/lib/eytan/releases /var/lib/eytan/staging && chown -R 10001:10001 /var/lib/eytan"]
+    volumes:
+      - vault:/var/lib/eytan/vault
+      - quarantine:/var/lib/eytan/quarantine
+      - backups:/var/lib/eytan/backups
+      - staging:/var/lib/eytan/staging
+      - releases:/var/lib/eytan/releases
+    networks: [internal]
+
+  clamav:
+    image: clamav/clamav:1.4
+    volumes:
+      - clamav_db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan --version || true"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+    networks: [internal]
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      CLAMD_HOST: clamav
+      CLAMD_PORT: "3310"
+    volumes:
+      - vault:/var/lib/eytan/vault
+      - quarantine:/var/lib/eytan/quarantine
+      - backups:/var/lib/eytan/backups
+      - staging:/var/lib/eytan/staging
+      - releases:/var/lib/eytan/releases
+    depends_on:
+      db:
+        condition: service_healthy
+      init-dirs:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [internal]
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    user: "10001:10001"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks: [internal]
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+
+  update-agent:
+    build:
+      context: .
+      dockerfile: update-agent/Dockerfile
+    env_file: .env
+    environment:
+      STAGING_PATH: /var/lib/eytan/staging
+      RELEASES_PATH: /var/lib/eytan/releases
+      CURRENT_RELEASE_PATH: /var/lib/eytan/releases/current
+      HEALTH_URL: http://backend:8000/api/health
+    volumes:
+      - staging:/var/lib/eytan/staging
+      - releases:/var/lib/eytan/releases
+      - backups:/var/lib/eytan/backups
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/health')"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks: [internal]
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    user: "10001:10001"
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - frontend
+      - backend
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST}
+      CLIENT_MAX_BODY_SIZE: ${CLIENT_MAX_BODY_SIZE}
+      TLS_CERT_PATH: ${TLS_CERT_PATH}
+      TLS_KEY_PATH: ${TLS_KEY_PATH}
+    volumes:
+      - ./infra/nginx/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
+      - ./infra/nginx/docker-entrypoint.sh:/docker-entrypoint-custom.sh:ro
+      - ./infra/nginx/certs:/etc/nginx/certs:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    entrypoint: ["/bin/sh", "/docker-entrypoint-custom.sh"]
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks: [internal]
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  pgdata:
+  clamav_db:
+  vault:
+  quarantine:
+  backups:
+  staging:
+  releases:
+
+networks:
+  internal:
+    driver: bridge
