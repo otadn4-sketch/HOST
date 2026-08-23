@@ -18,10 +18,23 @@ Write-Host "Database, vault, and uploaded files are kept."
 Write-Host "Only live_app and live_frontend volumes are recreated."
 
 function Get-MountVolume([string]$service, [string]$destination) {
-  $ids = @(docker compose ps -aq $service 2>$null | Where-Object { $_.Trim() -ne "" })
-  if ($ids.Count -eq 0) { return $null }
-  $name = docker inspect -f "{{range .Mounts}}{{if eq .Destination `"$destination`"}}{{.Name}}{{end}}{{end}}" $ids[0] 2>$null
-  if ($name) { return $name.Trim() }
+  # Parse inspect JSON in PowerShell. Go templates with paths like /app break on Windows.
+  $prev = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  try {
+    $ids = @(docker compose ps -aq $service 2>$null | Where-Object { $_.Trim() -ne "" })
+    if ($ids.Count -eq 0) { return $null }
+    $raw = docker inspect $ids[0] 2>$null
+    if (-not $raw) { return $null }
+    $info = $raw | ConvertFrom-Json
+    foreach ($mount in @($info.Mounts)) {
+      if ($mount.Destination -eq $destination) { return [string]$mount.Name }
+    }
+  } catch {
+    return $null
+  } finally {
+    $ErrorActionPreference = $prev
+  }
   return $null
 }
 
