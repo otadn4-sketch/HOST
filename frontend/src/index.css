@@ -49,11 +49,24 @@
 }
 
 @layer base {
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
   body {
     font-family: var(--font-sans);
     direction: rtl;
     background: #F7F1E8;
     color: #3B2114;
+    min-height: 100dvh;
+  }
+  button,
+  a,
+  select,
+  input {
+    touch-action: manipulation;
   }
 }
 

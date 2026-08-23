@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  X,
   FolderLock,
   UploadCloud,
   BarChart3,
@@ -21,6 +22,8 @@ interface SidebarProps {
   onNavigate: (view: string) => void;
   currentUser: User;
   onOpenUploadModal: () => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -28,6 +31,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onNavigate,
   currentUser,
   onOpenUploadModal,
+  mobileOpen = false,
+  onMobileClose,
 }) => {
   const isAdmin = currentUser.role === 'system_admin';
   const isGroupAdmin = currentUser.role === 'group_admin';
@@ -49,9 +54,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'audit_logs', label: 'لاگ رخدادها و ردگیری', icon: ScrollText, visible: isAdmin || isGroupAdmin },
   ];
 
+  const go = (view: string) => {
+    onNavigate(view);
+    onMobileClose?.();
+  };
+
   return (
-    <aside className="w-64 bg-[#4A2C17] text-white border-l border-[#3B2114] flex flex-col justify-between shrink-0 min-h-[calc(100vh-4rem)] p-4">
+    <aside
+      className={`bg-[#4A2C17] text-white flex flex-col justify-between p-4 overflow-y-auto
+        fixed z-50 top-0 bottom-0 right-0 w-[min(19rem,88vw)] pt-[max(1rem,env(safe-area-inset-top))] transition-transform duration-200
+        lg:static lg:z-auto lg:w-64 lg:min-h-[calc(100dvh-4rem)] lg:shrink-0 lg:translate-x-0 lg:border-l lg:border-[#3B2114] lg:pt-4
+        ${mobileOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}`}
+    >
       <div className="space-y-5">
+        <div className="flex items-center justify-between lg:hidden mb-1">
+          <p className="text-sm font-bold">منو</p>
+          <button type="button" onClick={onMobileClose} className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center" aria-label="بستن منو">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
         <div>
           {isViewer ? (
             <div className="p-3 bg-amber-950/40 rounded-xl border border-amber-800/60 text-xs text-amber-300 flex items-start gap-2">
@@ -63,8 +84,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ) : (
             <button
-              onClick={onOpenUploadModal}
-              className="w-full flex items-center justify-center gap-2 bg-[#8B5A2B] hover:bg-[#A67C52] text-white font-bold py-2.5 px-4 rounded-xl text-sm"
+              onClick={() => {
+                onOpenUploadModal();
+                onMobileClose?.();
+              }}
+              className="w-full flex items-center justify-center gap-2 bg-[#8B5A2B] hover:bg-[#A67C52] text-white font-bold py-2.5 px-4 rounded-xl text-sm min-h-11"
             >
               <UploadCloud className="w-4 h-4" />
               بارگذاری فایل جدید
@@ -80,8 +104,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             return (
               <button
                 key={item.id}
-                onClick={() => onNavigate(item.id)}
-                className={`w-full flex items-center justify-between p-3 rounded-lg text-xs font-medium ${
+                onClick={() => go(item.id)}
+                className={`w-full flex items-center justify-between p-3 rounded-lg text-xs font-medium min-h-11 ${
                   isActive ? 'bg-[#8B5A2B] text-white font-bold' : 'text-[#EFE6D6] hover:bg-white/10'
                 }`}
               >
@@ -115,7 +139,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     return (
                       <button
                         key={item.id}
-                        onClick={() => onNavigate(item.id)}
+                        onClick={() => go(item.id)}
                         className={`w-full flex items-center gap-2.5 p-2.5 rounded-lg text-xs ${
                           isActive ? 'bg-[#8B5A2B] text-white font-bold' : 'text-[#EFE6D6] hover:bg-white/10'
                         }`}

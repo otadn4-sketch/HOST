@@ -117,9 +117,9 @@ export function FilePreviewModal({ file, currentUser, onClose, onDownload }: Fil
   const officeLike = isOfficeType(file.mimeType, file.originalName);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3B2114]/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center bg-[#3B2114]/40 p-0 sm:p-4" onClick={onClose}>
       <div
-        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-[#E8D9C4] bg-white shadow-2xl"
+        className="flex h-full sm:h-auto max-h-none sm:max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-none sm:rounded-2xl border-0 sm:border border-[#E8D9C4] bg-white shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-[#E8D9C4] bg-[#F7F1E8] px-5 py-3">

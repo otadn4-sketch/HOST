@@ -31,6 +31,7 @@ export default function App() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [portalSummarize, setPortalSummarize] = useState<FileItem | null>(null);
   const [openFileId, setOpenFileId] = useState<string | null>(null);
+  const [navOpen, setNavOpen] = useState(false);
 
   const refreshData = useCallback(async () => {
     const [g, f, p] = await Promise.all([DataApi.groups(), DataApi.files(searchQuery), DataApi.policy()]);
@@ -90,25 +91,39 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F1E8] text-[#3B2114] flex flex-col font-sans" dir="rtl">
+    <div className="min-h-dvh bg-[#F7F1E8] text-[#3B2114] flex flex-col font-sans overflow-x-hidden" dir="rtl">
       <Navbar
         currentUser={currentUser}
         onSearch={setSearchQuery}
         searchQuery={searchQuery}
-        onNavigate={setCurrentView}
+        onNavigate={(view) => {
+          setNavOpen(false);
+          setCurrentView(view);
+        }}
+        onOpenMenu={() => setNavOpen(true)}
         onLogout={async () => {
           await AuthApi.logout();
           setCurrentUser(null);
         }}
       />
-      <div className="flex-1 flex max-w-7xl w-full mx-auto">
+      <div className="flex-1 flex max-w-7xl w-full mx-auto min-w-0">
+        {navOpen && (
+          <button
+            type="button"
+            className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+            aria-label="بستن منو"
+            onClick={() => setNavOpen(false)}
+          />
+        )}
         <Sidebar
           currentView={currentView}
           onNavigate={setCurrentView}
           currentUser={currentUser}
           onOpenUploadModal={handleOpenUploadModal}
+          mobileOpen={navOpen}
+          onMobileClose={() => setNavOpen(false)}
         />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-5xl">
+        <main className="flex-1 p-3 sm:p-6 lg:p-8 overflow-y-auto min-w-0 max-w-5xl pb-24 lg:pb-8">
           {currentView === 'user_portal' && (
             <UserPortal
               currentUser={currentUser}

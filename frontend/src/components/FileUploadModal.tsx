@@ -118,8 +118,8 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
-      <div className="bg-white rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-2xl p-6 space-y-5">
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 animate-in fade-in">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl max-w-xl w-full max-h-[92dvh] overflow-y-auto border border-slate-200 shadow-2xl p-4 sm:p-6 space-y-5">
         
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">

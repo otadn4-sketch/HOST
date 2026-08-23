@@ -65,7 +65,9 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
   const [selectedTopic, setSelectedTopic] = useState<string>('all');
   const [selectedClassification, setSelectedClassification] = useState<string>('all');
   const [selectedScanStatus, setSelectedScanStatus] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches ? 'grid' : 'table'
+  );
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
   const [summarizingFile, setSummarizingFile] = useState<FileItem | null>(null);
@@ -240,7 +242,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
             <span className="text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
               تعداد فایل‌های در دسترس: <strong className="text-slate-900 font-bold">{filteredFiles.length}</strong>
             </span>
-            <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200">
+            <div className="hidden sm:flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200">
               <button
                 onClick={() => setViewMode('table')}
                 className={`p-1.5 rounded-md transition-colors ${viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'}`}

@@ -57,7 +57,7 @@ export function PwaInstallHint() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 left-4 z-40 mx-auto max-w-md rounded-2xl border border-[#E8D9C4] bg-white p-4 shadow-xl sm:right-6 sm:left-auto">
+    <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 left-4 z-40 mx-auto max-w-md rounded-2xl border border-[#E8D9C4] bg-white p-4 shadow-xl sm:right-6 sm:left-auto">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#4A2C17] text-white">
           <Smartphone size={18} />
