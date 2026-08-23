@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.3
+
+- پیش‌نمایش فایل‌های Word / Excel / PowerPoint متن استخراج‌شده نشان می‌دهد، نه بایت ZIP
+- پورت ۸۰ دیگر به HTTPS ریدایرکت نمی‌شود تا تونل موقت اینترنت کار کند
+- اسکریپت `scripts/share-internet.ps1` / `.sh` برای نمایش موقت روی اینترنت
+- وب‌اپ نصب‌پذیر روی موبایل (PWA / Add to Home Screen)
+
 ## 1.2.2
 
 - همگام‌سازی ایمیج با volumeهای `live_app` / `live_frontend` تا `docker compose up --build` کد قدیمی volume را عوض کند

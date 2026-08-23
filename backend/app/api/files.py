@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from sqlalchemy.orm import Session as DBSession
 
 from app.api.deps import get_current_user, get_db
@@ -15,6 +15,7 @@ from app.models.entities import FileObject, FilePermission, User, utcnow
 from app.schemas import FileMetaPatchIn
 from app.security.rbac import can_upload, evaluate_file_access, is_admin
 from app.services.audit import write_audit
+from app.services.file_types import extract_office_preview_text
 from app.services.files import get_visible_file, ingest_file, is_malware_hit, serialize_file, stored_file_path, stream_to_quarantine
 from app.services.policy import get_or_create_policy
 
@@ -245,6 +246,19 @@ def preview_file(
         details="پیش‌نمایش محتوای فایل",
         request=request,
     )
+    extracted = extract_office_preview_text(path, file.extension or file.original_name)
+    if extracted:
+        payload = extracted.encode("utf-8")
+        return Response(
+            content=payload,
+            media_type="text/plain; charset=utf-8",
+            headers={
+                "Content-Disposition": "inline; filename=\"preview.txt\"",
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "no-store",
+                "X-Eytan-Preview": "extracted-text",
+            },
+        )
     return _stream_file(file, path, inline=True)
 
 

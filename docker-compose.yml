@@ -141,6 +141,7 @@ services:
       TLS_KEY_PATH: ${TLS_KEY_PATH}
     volumes:
       - ./infra/nginx/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
+      - ./infra/nginx/app_locations.conf:/etc/nginx/app_locations.conf:ro
       - ./infra/nginx/docker-entrypoint.sh:/docker-entrypoint-custom.sh:ro
       - ./infra/nginx/certs:/etc/nginx/certs:ro
     ports:

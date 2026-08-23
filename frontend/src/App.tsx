@@ -12,6 +12,7 @@ import { SystemUpdatePanel } from './components/SystemUpdatePanel';
 import { AiFileChatView } from './components/AiFileChatView';
 import { UserPortal } from './components/UserPortal';
 import { AiSummarizeModal } from './components/AiSummarizeModal';
+import { PwaInstallHint } from './components/PwaInstallHint';
 import { AuthApi, DataApi, mapFile, mapGroup, mapLog, mapPolicy, mapUser } from './services/api';
 import { User, Department, FileItem, AuditLog, SystemSecurityPolicy } from './types';
 import { Lock } from 'lucide-react';
@@ -75,7 +76,12 @@ export default function App() {
   }
 
   if (!currentUser) {
-    return <LoginView onLoggedIn={bootstrap} />;
+    return (
+      <>
+        <LoginView onLoggedIn={bootstrap} />
+        <PwaInstallHint />
+      </>
+    );
   }
 
   const handleOpenUploadModal = () => {
@@ -196,6 +202,7 @@ export default function App() {
       {portalSummarize && (
         <AiSummarizeModal file={portalSummarize} currentUser={currentUser} onClose={() => setPortalSummarize(null)} />
       )}
+      <PwaInstallHint />
     </div>
   );
 }

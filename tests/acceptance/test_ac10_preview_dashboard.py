@@ -79,3 +79,41 @@ def test_admin_download_preview_and_unique_views(client):
     actions = [item["action"] for item in logs.json()["logs"]]
     assert "file_preview" in actions
     assert any(item["action_title"] == "پیش‌نمایش محتوای فایل" for item in logs.json()["logs"])
+
+
+def _docx_bytes(text: str) -> bytes:
+    import zipfile
+    from io import BytesIO
+
+    buf = BytesIO()
+    document = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+        f"<w:body><w:p><w:r><w:t>{text}</w:t></w:r></w:p></w:body></w:document>"
+    )
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("[Content_Types].xml", '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>')
+        zf.writestr("word/document.xml", document)
+    return buf.getvalue()
+
+
+def test_docx_preview_returns_extracted_text_not_zip(client):
+    seed_user("alice", "user", email="alice@eytan.local")
+    login(client, "alice")
+    h = auth_header(client)
+    up = client.post(
+        "/api/files",
+        headers=h,
+        files={"file": ("report.docx", _docx_bytes("متن استخراج‌شده از ورد"), "application/vnd.openxmlformats-officedocument.wordprocessingml.document")},
+        data={"title": "گزارش ورد", "topic": "آزمون", "classification": "internal"},
+    )
+    assert up.status_code == 200, up.text
+    file_id = up.json()["file"]["id"]
+    preview = client.get(f"/api/files/{file_id}/preview", headers=h)
+    assert preview.status_code == 200, preview.text
+    body = preview.content.decode("utf-8")
+    assert "متن استخراج‌شده از ورد" in body
+    assert not body.startswith("PK")
+    assert "[Content_Types].xml" not in body
+    assert preview.headers.get("x-eytan-preview") == "extracted-text"
+    assert "text/plain" in preview.headers.get("content-type", "")

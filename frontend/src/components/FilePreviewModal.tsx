@@ -11,6 +11,21 @@ interface FilePreviewModalProps {
   onDownload: (file: FileItem) => void;
 }
 
+function isOfficeType(mime: string, name: string) {
+  const m = (mime || '').toLowerCase();
+  const n = (name || '').toLowerCase();
+  if (
+    m.includes('officedocument') ||
+    m.includes('msword') ||
+    m.includes('ms-excel') ||
+    m.includes('ms-powerpoint') ||
+    m.includes('opendocument')
+  ) {
+    return true;
+  }
+  return /\.(docx?|xlsx?|pptx?|odt|ods|odp)$/i.test(n);
+}
+
 function isImageType(mime: string, name: string) {
   return mime.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(name);
 }
@@ -20,17 +35,23 @@ function isPdfType(mime: string, name: string) {
 }
 
 function isTextType(mime: string, name: string) {
+  if (isOfficeType(mime, name)) return false;
   return (
     mime.startsWith('text/') ||
     mime.includes('json') ||
-    mime.includes('xml') ||
+    (mime.includes('xml') && !mime.includes('openxml')) ||
     /\.(txt|csv|md|json|xml|log)$/i.test(name)
   );
+}
+
+function looksLikeZipGarbage(text: string) {
+  return text.startsWith('PK') && text.includes('[Content_Types].xml');
 }
 
 export function FilePreviewModal({ file, currentUser, onClose, onDownload }: FilePreviewModalProps) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
+  const [extracted, setExtracted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +62,7 @@ export function FilePreviewModal({ file, currentUser, onClose, onDownload }: Fil
     setError(null);
     setBlobUrl(null);
     setTextContent(null);
+    setExtracted(false);
 
     (async () => {
       try {
@@ -53,14 +75,28 @@ export function FilePreviewModal({ file, currentUser, onClose, onDownload }: Fil
           const payload = await response.json().catch(() => ({}));
           throw new Error(payload.detail || 'پیش‌نمایش این فایل در دسترس نیست.');
         }
+        const previewKind = (response.headers.get('x-eytan-preview') || '').toLowerCase();
+        const contentType = (response.headers.get('content-type') || '').toLowerCase();
         const blob = await response.blob();
-        if (isTextType(file.mimeType, file.originalName) && blob.size < 2_000_000) {
-          setTextContent(await blob.text());
-        } else {
-          const url = URL.createObjectURL(blob);
-          revoked = url;
-          setBlobUrl(url);
+        const treatAsText =
+          previewKind === 'extracted-text' ||
+          contentType.includes('text/plain') ||
+          (isTextType(file.mimeType, file.originalName) && blob.size < 2_000_000);
+        if (treatAsText) {
+          const text = await blob.text();
+          if (looksLikeZipGarbage(text)) {
+            return;
+          }
+          setExtracted(previewKind === 'extracted-text');
+          setTextContent(text);
+          return;
         }
+        if (isOfficeType(file.mimeType, file.originalName)) {
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        revoked = url;
+        setBlobUrl(url);
       } catch (err) {
         if ((err as Error).name === 'AbortError') return;
         setError(err instanceof Error ? err.message : 'خطا در بارگذاری پیش‌نمایش');
@@ -78,7 +114,7 @@ export function FilePreviewModal({ file, currentUser, onClose, onDownload }: Fil
   const canDownload = StorageService.canUserDownloadFile(currentUser, file);
   const showImage = Boolean(blobUrl) && isImageType(file.mimeType, file.originalName);
   const showPdf = Boolean(blobUrl) && isPdfType(file.mimeType, file.originalName);
-  const officeLike = /\.(docx?|xlsx?|pptx?)$/i.test(file.originalName);
+  const officeLike = isOfficeType(file.mimeType, file.originalName);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3B2114]/40 p-4" onClick={onClose}>
@@ -130,9 +166,14 @@ export function FilePreviewModal({ file, currentUser, onClose, onDownload }: Fil
             </div>
           )}
           {!loading && !error && textContent !== null && (
-            <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-xl border border-[#E8D9C4] bg-white p-4 text-xs leading-6 text-[#4A2C17]">
-              {textContent}
-            </pre>
+            <div className="space-y-2">
+              {extracted && (
+                <p className="text-[11px] font-bold text-[#8B5A2B]">متن استخراج‌شده از فایل آفیس (پیش‌نمایش)</p>
+              )}
+              <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-xl border border-[#E8D9C4] bg-white p-4 text-xs leading-6 text-[#4A2C17]">
+                {textContent}
+              </pre>
+            </div>
           )}
           {!loading && !error && showImage && blobUrl && (
             <img src={blobUrl} alt={file.title} className="mx-auto max-h-[70vh] max-w-full rounded-xl object-contain" />
@@ -145,7 +186,7 @@ export function FilePreviewModal({ file, currentUser, onClose, onDownload }: Fil
               <ExternalLink className="text-[#8B5A2B]" size={36} />
               <p className="text-sm font-bold text-[#4A2C17]">
                 {officeLike
-                  ? 'پیش‌نمایش آنلاین برای فایل‌های آفیس در این سامانه فعال نیست. فایل را دانلود کنید.'
+                  ? 'متن قابل‌استخراج در این فایل آفیس پیدا نشد. برای دیدن قالب‌بندی کامل، فایل را دانلود کنید.'
                   : 'این نوع فایل در مرورگر پیش‌نمایش ندارد. می‌توانید آن را دانلود کنید.'}
               </p>
               {canDownload && (

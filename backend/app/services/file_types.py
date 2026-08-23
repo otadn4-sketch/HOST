@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import zipfile
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -139,3 +140,144 @@ def extension_allowed(ext: str, allowed: list[str]) -> bool:
 
 def is_dangerous_extension(ext: str) -> bool:
     return ext.lower().lstrip(".") in DANGEROUS_EXTENSIONS
+
+
+MAX_PREVIEW_XML_BYTES = 8 * 1024 * 1024
+MAX_PREVIEW_CHARS = 80_000
+
+
+def extract_office_preview_text(path: Path, extension: str = "") -> str | None:
+    """Return readable text from OOXML (docx/xlsx/pptx). ZIP bytes are never returned."""
+    ext = _office_preview_extension(path, extension)
+    if ext not in {"docx", "xlsx", "pptx"}:
+        return None
+    try:
+        with zipfile.ZipFile(path) as zf:
+            if ext == "docx":
+                text = _docx_preview_text(zf)
+            elif ext == "xlsx":
+                text = _xlsx_preview_text(zf)
+            else:
+                text = _pptx_preview_text(zf)
+    except (zipfile.BadZipFile, KeyError, ET.ParseError, OSError, ValueError):
+        return None
+    text = (text or "").strip()
+    if not text:
+        return None
+    return _clip_preview(text)
+
+
+def _office_preview_extension(path: Path, extension: str) -> str:
+    ext = (extension or "").lower().lstrip(".")
+    if ext in {"docx", "xlsx", "pptx"}:
+        return ext
+    try:
+        with zipfile.ZipFile(path) as zf:
+            names = [name.replace("\\", "/").lower() for name in zf.namelist()]
+    except zipfile.BadZipFile:
+        return ext
+    if any(name.startswith("word/") for name in names):
+        return "docx"
+    if any(name.startswith("xl/") for name in names):
+        return "xlsx"
+    if any(name.startswith("ppt/") for name in names):
+        return "pptx"
+    return ext
+
+
+def _clip_preview(text: str) -> str:
+    if len(text) <= MAX_PREVIEW_CHARS:
+        return text
+    return text[:MAX_PREVIEW_CHARS] + "\n\n… (متن کوتاه‌شده برای پیش‌نمایش)"
+
+
+def _xml_local(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1]
+
+
+def _read_zip_xml(zf: zipfile.ZipFile, name: str) -> ET.Element:
+    info = zf.getinfo(name)
+    if info.file_size > MAX_PREVIEW_XML_BYTES:
+        raise ValueError("xml too large")
+    return ET.fromstring(zf.read(name))
+
+
+def _docx_preview_text(zf: zipfile.ZipFile) -> str:
+    name = next((n for n in zf.namelist() if n.replace("\\", "/").lower() == "word/document.xml"), None)
+    if not name:
+        return ""
+    root = _read_zip_xml(zf, name)
+    lines: list[str] = []
+    for paragraph in root.iter():
+        if _xml_local(paragraph.tag) != "p":
+            continue
+        pieces = [node.text or "" for node in paragraph.iter() if _xml_local(node.tag) == "t"]
+        line = "".join(pieces).strip()
+        if line:
+            lines.append(line)
+    return "\n".join(lines)
+
+
+def _xlsx_preview_text(zf: zipfile.ZipFile) -> str:
+    names = [n.replace("\\", "/") for n in zf.namelist()]
+    shared: list[str] = []
+    shared_name = next((n for n in names if n.lower() == "xl/sharedstrings.xml"), None)
+    if shared_name:
+        root = _read_zip_xml(zf, shared_name)
+        for si in root.iter():
+            if _xml_local(si.tag) != "si":
+                continue
+            shared.append("".join(node.text or "" for node in si.iter() if _xml_local(node.tag) == "t"))
+    sheets = sorted(n for n in names if n.lower().startswith("xl/worksheets/sheet") and n.lower().endswith(".xml"))
+    lines: list[str] = []
+    for sheet in sheets[:20]:
+        root = _read_zip_xml(zf, sheet)
+        lines.append(f"[{sheet.rsplit('/', 1)[-1]}]")
+        for row in root.iter():
+            if _xml_local(row.tag) != "row":
+                continue
+            cells: list[str] = []
+            for cell in row:
+                if _xml_local(cell.tag) != "c":
+                    continue
+                cell_type = cell.attrib.get("t", "")
+                inline = None
+                value = None
+                for child in cell:
+                    local = _xml_local(child.tag)
+                    if local == "is":
+                        inline = "".join(node.text or "" for node in child.iter() if _xml_local(node.tag) == "t")
+                    elif local == "v":
+                        value = child.text or ""
+                if inline:
+                    cells.append(inline)
+                elif value:
+                    if cell_type == "s":
+                        try:
+                            cells.append(shared[int(value)])
+                        except (ValueError, IndexError):
+                            cells.append(value)
+                    else:
+                        cells.append(value)
+            if any(item.strip() for item in cells):
+                lines.append("\t".join(cells))
+            if sum(len(item) for item in lines) > MAX_PREVIEW_CHARS:
+                break
+    return "\n".join(lines)
+
+
+def _pptx_preview_text(zf: zipfile.ZipFile) -> str:
+    names = sorted(
+        n
+        for n in zf.namelist()
+        if n.replace("\\", "/").lower().startswith("ppt/slides/slide")
+        and n.lower().endswith(".xml")
+        and "/_rels/" not in n.replace("\\", "/").lower()
+    )
+    parts: list[str] = []
+    for index, name in enumerate(names[:40], 1):
+        root = _read_zip_xml(zf, name)
+        texts = [node.text.strip() for node in root.iter() if _xml_local(node.tag) == "t" and (node.text or "").strip()]
+        if texts:
+            parts.append(f"— اسلاید {index} —\n" + "\n".join(texts))
+    return "\n\n".join(parts)

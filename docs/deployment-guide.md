@@ -60,3 +60,16 @@ docker compose up -d --build
 ## اسرار
 
 فقط `.env` با مجوز ۶۰۰ یا Docker secrets. هیچ رمز پیش‌فرضی در production فعال نیست.
+
+## پورت ۸۰ و تونل موقت
+
+Nginx روی پورت ۸۰ خود سامانه را سرو می‌کند (ریدایرکت اجباری به HTTPS ندارد) تا تونل Cloudflare/ngrok به `http://127.0.0.1:80` وصل شود. HTTPS روی ۴۴۳ همچنان فعال است. کوکی نشست اگر درخواست از پشت HTTPS (از جمله تونل) بیاید Secure می‌شود.
+
+نمایش موقت:
+
+```powershell
+.\scripts\share-internet.ps1
+```
+
+آدرس `trycloudflare.com` فقط تا وقتی اسکریپت باز است معتبر است.
+

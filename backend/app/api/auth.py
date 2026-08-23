@@ -27,9 +27,26 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 GENERIC_LOGIN_ERROR = "نام کاربری یا گذرواژه نادرست است."
 
 
-def _set_session_cookies(response: Response, settings: Settings, token: str, csrf: str, timeout_minutes: int) -> None:
+def _cookie_secure(request: Request | None, settings: Settings) -> bool:
+    if request is not None:
+        proto = (request.headers.get("x-forwarded-proto") or request.url.scheme or "").split(",")[0].strip().lower()
+        if proto == "https":
+            return True
+        if proto == "http":
+            return False
+    return bool(settings.session_secure_cookie) and settings.is_production
+
+
+def _set_session_cookies(
+    response: Response,
+    settings: Settings,
+    token: str,
+    csrf: str,
+    timeout_minutes: int,
+    request: Request | None = None,
+) -> None:
     max_age = timeout_minutes * 60
-    secure = settings.is_production
+    secure = _cookie_secure(request, settings)
     response.set_cookie(
         settings.session_cookie_name,
         token,
@@ -157,7 +174,7 @@ def login(
         details="ورود موفق",
         request=request,
     )
-    _set_session_cookies(response, settings, token, session.csrf_secret, policy.session_timeout_minutes)
+    _set_session_cookies(response, settings, token, session.csrf_secret, policy.session_timeout_minutes, request)
     return {"user": serialize_user(user), "csrf_token": session.csrf_secret}
 
 
@@ -187,7 +204,14 @@ def me(
 ):
     policy = get_or_create_policy(db)
     session = request.state.session
-    _set_session_cookies(response, settings, request.cookies.get(settings.session_cookie_name, ""), session.csrf_secret, policy.session_timeout_minutes)
+    _set_session_cookies(
+        response,
+        settings,
+        request.cookies.get(settings.session_cookie_name, ""),
+        session.csrf_secret,
+        policy.session_timeout_minutes,
+        request,
+    )
     from app.models.entities import MaintenanceState
 
     maint = db.query(MaintenanceState).filter(MaintenanceState.id == 1).one_or_none()
