@@ -41,7 +41,7 @@ function Get-MountVolume([string]$service, [string]$destination) {
 $liveApp = Get-MountVolume "backend" "/app"
 $liveFe = Get-MountVolume "frontend" "/usr/share/nginx/html"
 
-Write-Host "Building images..."
+Write-Host "Building images first (running site stays up until this succeeds)..."
 docker compose build backend frontend update-agent
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 

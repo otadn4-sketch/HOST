@@ -13,12 +13,11 @@ Write-Host "Anyone with the URL can reach the login page. Stop with Ctrl+C."
 Write-Host ""
 
 try {
-  Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1/api/health" -TimeoutSec 5 | Out-Null
+  Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1/api/health" -TimeoutSec 5 -MaximumRedirection 0 | Out-Null
+  Write-Host "Origin HTTP health is OK."
 } catch {
-  Write-Host "http://127.0.0.1/api/health is not reachable."
-  Write-Host "Start the stack first: docker compose up -d"
-  Write-Host "If this folder is a new zip, also run: .\scripts\apply-source.ps1"
-  exit 1
+  Write-Host "Warning: http://127.0.0.1/api/health did not return 200."
+  Write-Host "The tunnel will still start. If the public page fails, run: docker compose up -d nginx"
 }
 
 $dir = Join-Path $env:LOCALAPPDATA "eytan-tools"
