@@ -40,10 +40,10 @@ function Test-CloudflareReachable {
 
 function Start-SshFallback {
   Write-Host ""
-  Write-Host "Starting SSH tunnel on port 443 (Pinggy). A public URL will be printed."
-  Write-Host "If Windows asks about OpenSSH, install 'OpenSSH Client' from Optional Features."
+  Write-Host "Starting SSH tunnel on port 443 (Pinggy)."
+  Write-Host "When it asks for a password, press Enter only. Do not type your Windows password."
   Write-Host ""
-  & ssh -p 443 -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 -R0:127.0.0.1:80 a.pinggy.io
+  & ssh -p 443 -l dummy -o PubkeyAuthentication=no -o PreferredAuthentications=password -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 -R0:127.0.0.1:80 a.pinggy.io
 }
 
 $useCloudflare = Test-CloudflareReachable
