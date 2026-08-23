@@ -5,6 +5,7 @@
 - پیش‌نمایش فایل‌های Word / Excel / PowerPoint متن استخراج‌شده نشان می‌دهد، نه بایت ZIP
 - پورت ۸۰ دیگر به HTTPS ریدایرکت نمی‌شود تا تونل موقت اینترنت کار کند
 - اسکریپت `scripts/share-internet.ps1` / `.sh` برای نمایش موقت روی اینترنت
+- اگر Cloudflare فیلتر باشد، همان اسکریپت به تونل SSH روی پورت ۴۴۳ برمی‌گردد
 - روی ویندوز اگر ExecutionPolicy اسکریپت را مسدود کرد: `powershell -ExecutionPolicy Bypass -File ...` یا `scripts/*.cmd`
 - وب‌اپ نصب‌پذیر روی موبایل (PWA / Add to Home Screen)
 
