@@ -78,6 +78,8 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+    environment:
+      EYTAN_FORCE_IMAGE_SYNC: ${EYTAN_FORCE_IMAGE_SYNC:-0}
     volumes:
       - live_frontend:/usr/share/nginx/html
     healthcheck:
