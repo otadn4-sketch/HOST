@@ -59,9 +59,11 @@ pytest
 سامانه روی همین ماشین با Docker اجرا می‌شود. برای نشان‌دادن موقت به دیگران، بعد از بالا بودن استک:
 
 ```powershell
-.\scripts\apply-source.ps1
-.\scripts\share-internet.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\apply-source.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\share-internet.ps1
 ```
+
+اگر خطای ExecutionPolicy آمد، همان دستور Bypass را بزنید یا `.\scripts\apply-source.cmd` و `.\scripts\share-internet.cmd`.
 
 اسکریپت یک آدرس `https://....trycloudflare.com` چاپ می‌کند. با Ctrl+C تونل بسته می‌شود. این کار سامانه را موقتاً روی اینترنت قرار می‌دهد؛ پس از نمایش، اسکریپت را متوقف کنید.
 

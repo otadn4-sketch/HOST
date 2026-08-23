@@ -1,5 +1,8 @@
 # Apply the source in this folder to the running Docker stack (Windows PowerShell).
 # Keeps database, vault, and uploaded files. Rebuilds only application code.
+# If PowerShell blocks the file, use one of:
+#   powershell -ExecutionPolicy Bypass -File .\scripts\apply-source.ps1
+#   .\scripts\apply-source.cmd
 $ErrorActionPreference = "Stop"
 Set-Location (Split-Path -Parent $PSScriptRoot)
 

@@ -1,6 +1,9 @@
 # Temporary public HTTPS URL for the local Docker stack (Windows PowerShell).
 # Origin is http://127.0.0.1:80. Cloudflare terminates HTTPS for visitors.
 # Stop with Ctrl+C. This exposes the live login page to the internet; use only briefly.
+# If PowerShell blocks the file, use:
+#   powershell -ExecutionPolicy Bypass -File .\scripts\share-internet.ps1
+#   .\scripts\share-internet.cmd
 
 $ErrorActionPreference = "Stop"
 Set-Location (Split-Path -Parent $PSScriptRoot)

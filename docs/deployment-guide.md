@@ -21,8 +21,10 @@ chmod +x scripts/*.sh
 اگر روی **ویندوز / PowerShell** هستید (نه Git Bash)، `|| true` کار نمی‌کند. از این استفاده کنید:
 
 ```powershell
-.\scripts\apply-source.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\apply-source.ps1
 ```
+
+یا `.\scripts\apply-source.cmd` اگر PowerShell اجرای `.ps1` را مسدود کرده باشد.
 
 یا دستی:
 
@@ -68,8 +70,10 @@ Nginx روی پورت ۸۰ خود سامانه را سرو می‌کند (رید
 نمایش موقت:
 
 ```powershell
-.\scripts\share-internet.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\share-internet.ps1
 ```
+
+یا `.\scripts\share-internet.cmd`.
 
 آدرس `trycloudflare.com` فقط تا وقتی اسکریپت باز است معتبر است.
 
