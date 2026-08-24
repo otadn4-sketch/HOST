@@ -107,5 +107,9 @@ ACTION_TITLES = {
     "meeting_deleted": "حذف جلسه",
     "faran_sync": "همگام‌سازی فاران",
     "document_scrub_stub": "پالایش سند (آزمایشی)",
+    "file_preview_heartbeat": "حضور در پیش‌نمایش",
+    "sms_sent": "ارسال پیامک",
+    "sms_failed": "خطا در ارسال پیامک",
+    "sms_config_updated": "به‌روزرسانی تنظیمات پیامک",
 }
 

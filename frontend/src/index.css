@@ -1,4 +1,18 @@
 @font-face {
+  font-family: 'IRZar';
+  src: url('/fonts/IRZAR.TTF') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IRZar';
+  src: url('/fonts/IRZAR-BOLD.TTF') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
   font-family: 'Shabnam';
   src: url('/fonts/Shabnam.ttf') format('truetype');
   font-weight: 400;
@@ -73,3 +87,9 @@
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #F7F1E8; }
 ::-webkit-scrollbar-thumb { background: #8B5A2B; border-radius: 3px; }
+
+.preview-irzar, .preview-irzar * {
+  font-family: 'IRZar', Tahoma, serif !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}

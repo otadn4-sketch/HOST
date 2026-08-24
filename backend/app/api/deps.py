@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session as DBSession
 from app.config import Settings, get_settings
 from app.db import make_engine, make_session_factory
 from app.models.entities import User
-from app.security.rbac import can_see_dashboard, is_admin
+from app.security.rbac import can_access_admin_panel, can_see_dashboard, is_admin
 from app.security.sessions import csrf_tokens_match, get_valid_session, touch_session
 from app.services.policy import get_or_create_policy
 
@@ -70,6 +70,12 @@ def get_current_user(
 def require_system_admin(user: User = Depends(get_current_user)) -> User:
     if not is_admin(user):
         raise HTTPException(status_code=403, detail="این عملیات فقط برای مدیر سامانه مجاز است.")
+    return user
+
+
+def require_any_admin(user: User = Depends(get_current_user)) -> User:
+    if not can_access_admin_panel(user):
+        raise HTTPException(status_code=403, detail="این عملیات فقط برای مدیران مجاز است.")
     return user
 
 

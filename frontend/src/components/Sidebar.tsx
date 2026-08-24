@@ -12,14 +12,13 @@ import {
   ChevronUp,
   Lock,
   RefreshCw,
-  MessageSquareText,
   LayoutDashboard,
   ClipboardList,
   UsersRound,
   Contact,
   Share2,
   GitFork,
-  Map,
+  Smartphone,
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -48,12 +47,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const mainMenuItems = [
     { id: 'user_portal', label: 'پرتال کاربری', icon: LayoutDashboard, visible: true },
-    { id: 'files', label: 'مخزن فایل‌ها و گزارش‌ها', icon: FolderLock, visible: true },
+    { id: 'files', label: 'مخزن فایل‌ها و گزارش‌ها', icon: FolderLock, visible: isAdmin || isGroupAdmin },
     { id: 'transactions', label: 'ثبت دستی تحویل', icon: ClipboardList, visible: true },
     { id: 'meetings', label: 'ثبت جلسات و ارائه‌ها', icon: UsersRound, visible: true },
     { id: 'recipients', label: 'پروفایل مخاطبان', icon: Contact, visible: true },
-    { id: 'phases', label: 'نقشه راه فازها', icon: Map, visible: true },
-    { id: 'ai_chat', label: 'گفت‌وگو با منابع', icon: MessageSquareText, visible: true },
+    { id: 'sms', label: 'پیامک و اطلاع‌رسانی', icon: Smartphone, visible: isAdmin || isGroupAdmin },
     { id: 'dashboard', label: 'داشبورد مدیریتی و آمار', icon: BarChart3, visible: isAdmin },
     { id: 'users_groups', label: 'مدیریت کاربران، واحدها و نقش‌ها', icon: Users, visible: isAdmin || isGroupAdmin },
   ];

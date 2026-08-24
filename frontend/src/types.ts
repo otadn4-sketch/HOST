@@ -126,7 +126,10 @@ export interface DashboardData {
     downloads: number;
     files_total: number;
     quarantined: number;
+    live_previews?: number;
+    sms_sent?: number;
   };
+  live_previews?: Array<{ user: string; file: string; file_id?: string; last_seen: string }>;
   top_topics: Array<{ topic: string; count: number }>;
   events: Array<{
     user: string;

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import shutil
+import unicodedata
 import uuid
 from pathlib import Path
 
@@ -20,6 +22,36 @@ from app.services.file_types import (
 )
 from app.services.policy import get_or_create_policy
 from app.services.scanner import ClamAVError, scan_file
+
+
+
+def similar_filename_key(name: str) -> str:
+    stem = Path(name or "").stem
+    text = unicodedata.normalize("NFKC", stem)
+    text = text.replace("ي", "ی").replace("ك", "ک").replace("ة", "ه").replace("‌", "")
+    text = text.casefold()
+    text = re.sub(r"[\s_\-–—]+", " ", text)
+    text = re.sub(r"[^\w\s\u0600-\u06ff]", "", text, flags=re.UNICODE)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def assert_unique_similar_name(db: DBSession, original_name: str, title: str, parent_file_id: str | None) -> None:
+    if parent_file_id:
+        return
+    key = similar_filename_key(original_name)
+    title_key = similar_filename_key(title) if title else ""
+    if not key:
+        return
+    rows = (
+        db.query(FileObject)
+        .filter(FileObject.is_deleted.is_(False), FileObject.is_current_version.is_(True))
+        .all()
+    )
+    for row in rows:
+        if similar_filename_key(row.original_name) == key:
+            raise HTTPException(status_code=409, detail="فایل با نام مشابه از قبل وجود دارد.")
+        if title_key and similar_filename_key(row.title) == title_key:
+            raise HTTPException(status_code=409, detail="فایل با نام مشابه از قبل وجود دارد.")
 
 
 def vault_abs(settings: Settings, relpath: str) -> Path:
@@ -98,6 +130,12 @@ def ingest_file(
     if group_id and group is None:
         quarantine_path.unlink(missing_ok=True)
         raise HTTPException(status_code=400, detail="گروه یافت نشد.")
+
+    try:
+        assert_unique_similar_name(db, original_name, title, parent_file_id)
+    except HTTPException:
+        quarantine_path.unlink(missing_ok=True)
+        raise
 
     max_size = min(policy.max_file_size_bytes, group.max_file_size_bytes if group else policy.max_file_size_bytes)
     if size > max_size:

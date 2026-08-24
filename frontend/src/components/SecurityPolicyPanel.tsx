@@ -38,14 +38,12 @@ export const SecurityPolicyPanel: React.FC<SecurityPolicyPanelProps> = ({
   const [lockoutMin, setLockoutMin] = useState(policy.lockoutDurationMinutes);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [infra, setInfra] = useState<{ host: string; vault: string; scanner: string } | null>(null);
-  const [chatPrompt, setChatPrompt] = useState('');
   const [summarizePrompt, setSummarizePrompt] = useState('');
   const [promptSaved, setPromptSaved] = useState(false);
 
   useEffect(() => {
     DataApi.infrastructure().then((r) => setInfra(r.infrastructure)).catch(() => setInfra(null));
     DataApi.aiPrompts().then((r) => {
-      setChatPrompt(r.prompts.chat_prompt);
       setSummarizePrompt(r.prompts.summarize_prompt);
     }).catch(() => undefined);
   }, []);
@@ -103,18 +101,15 @@ export const SecurityPolicyPanel: React.FC<SecurityPolicyPanelProps> = ({
       <form
         onSubmit={async (e) => {
           e.preventDefault();
-          await DataApi.saveAiPrompts({ chat_prompt: chatPrompt, summarize_prompt: summarizePrompt });
+          await DataApi.saveAiPrompts({ summarize_prompt: summarizePrompt });
           setPromptSaved(true);
           setTimeout(() => setPromptSaved(false), 2500);
         }}
         className="bg-white rounded-2xl p-6 border border-slate-200 space-y-4"
       >
         <h2 className="text-sm font-bold text-slate-900">پرامپت‌های هوش مصنوعی</h2>
-        <p className="text-[11px] text-slate-500">دو پرامپت سازمانی: گفت‌وگو با منابع و خلاصه‌سازی هر فایل.</p>
+        <p className="text-[11px] text-slate-500">پرامپت سازمانی خلاصه‌سازی فایل.</p>
         {promptSaved && <p className="text-xs text-emerald-700">پرامپت‌ها ذخیره شد.</p>}
-        <label className="block text-xs font-bold">پرامپت گفت‌وگو با منابع
-          <textarea className="mt-1 w-full bg-slate-100 p-3 rounded-xl border min-h-40 text-[11px] leading-6" value={chatPrompt} onChange={(e) => setChatPrompt(e.target.value)} />
-        </label>
         <label className="block text-xs font-bold">پرامپت خلاصه‌سازی فایل
           <textarea className="mt-1 w-full bg-slate-100 p-3 rounded-xl border min-h-40 text-[11px] leading-6" value={summarizePrompt} onChange={(e) => setSummarizePrompt(e.target.value)} />
         </label>

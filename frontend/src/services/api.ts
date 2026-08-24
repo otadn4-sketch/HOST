@@ -236,6 +236,13 @@ export const DataApi = {
   faranStatus: () => api<{ faran: any }>('/api/faran/status'),
   faranSync: () => api('/api/faran/sync', { method: 'POST' }),
   relationshipGraph: () => api<{ graph: any }>('/api/graph/relationships'),
+  previewHeartbeat: (id: string, sessionId: string) =>
+    api(`/api/files/${id}/preview-heartbeat`, { method: 'POST', body: JSON.stringify({ session_id: sessionId }) }),
+  smsConfig: () => api<{ config: any }>('/api/sms/config'),
+  saveSmsConfig: (payload: object) =>
+    api('/api/sms/config', { method: 'PUT', body: JSON.stringify(payload) }),
+  smsDirectory: () => api<{ users: any[]; recipients: any[] }>('/api/sms/directory'),
+  sendSms: (payload: object) => api<{ sent: number; failed: number }>('/api/sms/send', { method: 'POST', body: JSON.stringify(payload) }),
 };
 
 export async function uploadFile(form: FormData) {

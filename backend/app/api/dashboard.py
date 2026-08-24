@@ -43,6 +43,32 @@ def dashboard(
         visit_q = visit_q.filter(AuditLog.timestamp >= since)
     visit_logs = visit_q.all()
 
+    heartbeat_q = db.query(AuditLog).filter(AuditLog.action == "file_preview_heartbeat")
+    if since:
+        heartbeat_q = heartbeat_q.filter(AuditLog.timestamp >= since)
+    heartbeat_logs = heartbeat_q.order_by(AuditLog.timestamp.desc()).all()
+    live_cutoff = datetime.now(timezone.utc) - timedelta(seconds=45)
+    live_previews = []
+    seen_live: set[tuple] = set()
+    for item in heartbeat_logs:
+        ts = item.timestamp
+        if ts is not None and ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+        if ts is None or ts < live_cutoff:
+            continue
+        marker = (item.user_id or item.username, item.target_id)
+        if marker in seen_live:
+            continue
+        seen_live.add(marker)
+        live_previews.append(
+            {
+                "user": item.username,
+                "file": item.target_resource,
+                "file_id": item.target_id,
+                "last_seen": item.timestamp,
+            }
+        )
+
     active_users = 0
     for u in users:
         last = aware(u.last_login_at)
@@ -104,6 +130,9 @@ def dashboard(
             "system_update",
             "ai_chat",
             "ai_summarize",
+            "file_preview_heartbeat",
+            "sms_sent",
+            "sms_failed",
         }
     ][:200]
 
@@ -125,6 +154,8 @@ def dashboard(
             "downloads": download_count,
             "files_total": len([f for f in files if f.is_current_version]),
             "quarantined": len([f for f in files if f.scan_status == "quarantined"]),
+            "live_previews": len(live_previews),
+            "sms_sent": sum(1 for l in logs if l.action == "sms_sent"),
         },
         "top_topics": sorted(
             [{"topic": k, "count": v} for k, v in file_topics.items()],
@@ -134,6 +165,7 @@ def dashboard(
         "file_viewer_chart": file_viewer_chart,
         "file_viewer_users": top_users,
         "file_viewers": file_viewers,
+        "live_previews": live_previews,
         "events": events,
         "event_by_action": sorted(
             [{"name": k, "count": v} for k, v in action_counts.items()],

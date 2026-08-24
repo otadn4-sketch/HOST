@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session as DBSession
 
-from app.models.entities import AiSettings, SecurityPolicy
+from app.models.entities import AiSettings, SecurityPolicy, SmsSettings
 from app.security.constants import DEFAULT_ALLOWED_EXTENSIONS
 from app.services.ai_prompts import DEFAULT_CHAT_PROMPT, DEFAULT_SUMMARIZE_PROMPT
 
@@ -43,6 +43,29 @@ def get_or_create_ai_settings(db: DBSession) -> AiSettings:
             row.chat_prompt = DEFAULT_CHAT_PROMPT
         if not (row.summarize_prompt or "").strip():
             row.summarize_prompt = DEFAULT_SUMMARIZE_PROMPT
+    return row
+
+
+def get_or_create_sms_settings(db: DBSession, settings=None) -> SmsSettings:
+    from app.config import get_settings
+    settings = settings or get_settings()
+    row = db.query(SmsSettings).filter(SmsSettings.id == 1).one_or_none()
+    if row is None:
+        row = SmsSettings(
+            id=1,
+            enabled=bool(settings.sms_enabled),
+            base_url=settings.sms_base_url or "",
+            api_key=settings.sms_api_key or "",
+            sender=settings.sms_sender or "",
+            http_method=(settings.sms_http_method or "POST").upper(),
+            content_type=(settings.sms_content_type or "json").lower(),
+            url_template=settings.sms_url_template or "",
+            body_template=settings.sms_body_template or "",
+            auth_header_name=settings.sms_auth_header_name or "",
+            extra_headers={},
+        )
+        db.add(row)
+        db.flush()
     return row
 
 

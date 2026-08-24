@@ -262,6 +262,29 @@ def preview_file(
     return _stream_file(file, path, inline=True)
 
 
+@router.post("/{file_id}/preview-heartbeat")
+def preview_heartbeat(
+    file_id: str,
+    request: Request,
+    db: DBSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    file, access = get_visible_file(db, user, file_id)
+    if file is None or not access.can_view:
+        raise HTTPException(status_code=404, detail="فایل یافت نشد.")
+    write_audit(
+        db,
+        user=user,
+        action="file_preview_heartbeat",
+        target_resource=file.title,
+        target_type="file",
+        target_id=file.id,
+        details="حضور در بخش پیش‌نمایش",
+        request=request,
+    )
+    return {"ok": True}
+
+
 @router.patch("/{file_id}")
 def patch_file(
     file_id: str,

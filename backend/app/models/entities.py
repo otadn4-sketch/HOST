@@ -212,6 +212,23 @@ class AiSettings(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class SmsSettings(Base):
+    __tablename__ = "sms_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    base_url: Mapped[str] = mapped_column(String(500), default="")
+    api_key: Mapped[str] = mapped_column(String(500), default="")
+    sender: Mapped[str] = mapped_column(String(64), default="")
+    http_method: Mapped[str] = mapped_column(String(8), default="POST")
+    content_type: Mapped[str] = mapped_column(String(16), default="json")
+    url_template: Mapped[str] = mapped_column(Text, default="")
+    body_template: Mapped[str] = mapped_column(Text, default="")
+    auth_header_name: Mapped[str] = mapped_column(String(80), default="")
+    extra_headers: Mapped[dict] = mapped_column(JSON, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class RecoveryToken(Base):
     __tablename__ = "recovery_tokens"
 

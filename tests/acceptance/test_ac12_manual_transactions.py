@@ -100,8 +100,8 @@ def test_ac12_phases_faran_stub_and_graph_isolation(client):
     assert payload["automated_delivery_deprecated"] is True
     flags = {item["flag"]: item["enabled"] for item in payload["phases"]}
     assert flags["phase_1_archive_enabled"] is True
-    assert flags["phase_4_sharing_enabled"] is False
-    assert flags["phase_5_security_graph_enabled"] is False
+    assert flags["phase_4_sharing_enabled"] is True
+    assert flags["phase_5_security_graph_enabled"] is True
 
     faran = client.get("/api/faran/status", headers=headers)
     assert faran.status_code == 200
@@ -115,7 +115,8 @@ def test_ac12_phases_faran_stub_and_graph_isolation(client):
     assert shares.status_code in {403, 501}
 
     graph = client.get("/api/graph/relationships", headers=headers)
-    assert graph.status_code == 403
+    assert graph.status_code == 200
+    assert "graph" in graph.json()
 
     meeting = client.post(
         "/api/meetings",

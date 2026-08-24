@@ -9,7 +9,6 @@ import { SecurityPolicyPanel } from './components/SecurityPolicyPanel';
 import { AuditLogsView } from './components/AuditLogsView';
 import { LoginView } from './components/LoginView';
 import { SystemUpdatePanel } from './components/SystemUpdatePanel';
-import { AiFileChatView } from './components/AiFileChatView';
 import { UserPortal } from './components/UserPortal';
 import { AiSummarizeModal } from './components/AiSummarizeModal';
 import { PwaInstallHint } from './components/PwaInstallHint';
@@ -18,7 +17,8 @@ import { MeetingLogView } from './components/MeetingLogView';
 import { RecipientProfilesView } from './components/RecipientProfilesView';
 import { SharingAccessView } from './components/SharingAccessView';
 import { RelationshipGraphView } from './components/RelationshipGraphView';
-import { PhaseRoadmapView } from './components/PhaseRoadmapView';
+import { FilePreviewModal } from './components/FilePreviewModal';
+import { SmsSendView } from './components/SmsSendView';
 import { AuthApi, DataApi, mapFile, mapGroup, mapLog, mapPolicy, mapUser } from './services/api';
 import { User, Department, FileItem, AuditLog, SystemSecurityPolicy } from './types';
 import { Lock } from 'lucide-react';
@@ -38,6 +38,7 @@ export default function App() {
   const [portalSummarize, setPortalSummarize] = useState<FileItem | null>(null);
   const [openFileId, setOpenFileId] = useState<string | null>(null);
   const [logFileId, setLogFileId] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
   const [navOpen, setNavOpen] = useState(false);
 
   const refreshData = useCallback(async () => {
@@ -136,14 +137,11 @@ export default function App() {
               currentUser={currentUser}
               files={files}
               onNavigate={setCurrentView}
-              onOpenFile={(f) => {
-                setOpenFileId(f.id);
-                setCurrentView('files');
-              }}
+              onOpenFile={(f) => setPreviewFile(f)}
               onSummarize={setPortalSummarize}
             />
           )}
-          {currentView === 'files' && (
+          {currentView === 'files' && (currentUser.role === 'system_admin' || currentUser.role === 'group_admin') && (
             <FileRepository
               files={files}
               currentUser={currentUser}
@@ -172,16 +170,20 @@ export default function App() {
             <MeetingLogView currentUser={currentUser} enabled />
           )}
           {currentView === 'recipients' && <RecipientProfilesView enabled />}
-          {currentView === 'phases' && <PhaseRoadmapView />}
-          {currentView === 'sharing' && <SharingAccessView enabled={false} />}
-          {currentView === 'graph' && currentUser.role === 'system_admin' ? (
-            <RelationshipGraphView enabled={false} />
-          ) : currentView === 'graph' ? (
-            <Locked title="گراف محلی" text="این بخش فقط برای مدیر سامانه و روی localhost است." />
-          ) : null}
-          {currentView === 'ai_chat' && (
-            <AiFileChatView files={files} currentUser={currentUser} departments={departments} />
+          {currentView === 'files' && currentUser.role !== 'system_admin' && currentUser.role !== 'group_admin' && (
+            <Locked title="مخزن فایل‌ها و گزارش‌ها" text="این بخش فقط برای مدیران سامانه قابل مشاهده است." />
           )}
+          {currentView === 'sharing' && <SharingAccessView enabled />}
+          {currentView === 'graph' && currentUser.role === 'system_admin' ? (
+            <RelationshipGraphView enabled />
+          ) : currentView === 'graph' ? (
+            <Locked title="گراف تعاملات" text="این بخش فقط برای مدیر سامانه است." />
+          ) : null}
+          {currentView === 'sms' && (currentUser.role === 'system_admin' || currentUser.role === 'group_admin') ? (
+            <SmsSendView currentUser={currentUser} />
+          ) : currentView === 'sms' ? (
+            <Locked title="پیامک" text="ارسال پیامک فقط برای مدیران مجاز است." />
+          ) : null}
           {currentView === 'dashboard' && (
             currentUser.role === 'system_admin' ? (
               <Dashboard
@@ -241,11 +243,22 @@ export default function App() {
         departments={departments}
         onUploadSuccess={() => {
           refreshData();
-          setCurrentView('files');
+          if (currentUser.role === 'system_admin' || currentUser.role === 'group_admin') {
+            setCurrentView('files');
+          } else {
+            setCurrentView('user_portal');
+          }
         }}
       />
       {portalSummarize && (
         <AiSummarizeModal file={portalSummarize} currentUser={currentUser} onClose={() => setPortalSummarize(null)} />
+      )}
+      {previewFile && (
+        <FilePreviewModal
+          file={previewFile}
+          currentUser={currentUser}
+          onClose={() => setPreviewFile(null)}
+        />
       )}
       <PwaInstallHint />
     </div>

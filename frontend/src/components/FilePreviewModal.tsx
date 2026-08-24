@@ -1,14 +1,13 @@
-import { useEffect, useState } from 'react';
-import { Download, ExternalLink, FileText, Loader2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ExternalLink, FileText, Loader2, X } from 'lucide-react';
 import { FileItem, User } from '../types';
-import { csrfToken } from '../services/api';
-import { StorageService } from '../services/storageService';
+import { csrfToken, DataApi } from '../services/api';
 
 interface FilePreviewModalProps {
   file: FileItem;
   currentUser: User;
   onClose: () => void;
-  onDownload: (file: FileItem) => void;
+  onDownload?: (file: FileItem) => void;
 }
 
 function isOfficeType(mime: string, name: string) {
@@ -48,7 +47,12 @@ function looksLikeZipGarbage(text: string) {
   return text.startsWith('PK') && text.includes('[Content_Types].xml');
 }
 
-export function FilePreviewModal({ file, currentUser, onClose, onDownload }: FilePreviewModalProps) {
+function blockCopy(event: React.ClipboardEvent | React.MouseEvent | KeyboardEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+export function FilePreviewModal({ file, onClose }: FilePreviewModalProps) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
   const [extracted, setExtracted] = useState(false);
@@ -111,7 +115,25 @@ export function FilePreviewModal({ file, currentUser, onClose, onDownload }: Fil
     };
   }, [file]);
 
-  const canDownload = StorageService.canUserDownloadFile(currentUser, file);
+  useEffect(() => {
+    const sessionId = `${file.id}-${Date.now()}`;
+    const beat = () => {
+      DataApi.previewHeartbeat(file.id, sessionId).catch(() => undefined);
+    };
+    beat();
+    const timer = window.setInterval(beat, 15000);
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && ['c', 'C', 'x', 'X', 's', 'S', 'p', 'P'].includes(event.key)) {
+        event.preventDefault();
+      }
+    };
+    document.addEventListener('keydown', onKey, true);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('keydown', onKey, true);
+    };
+  }, [file.id]);
+
   const showImage = Boolean(blobUrl) && isImageType(file.mimeType, file.originalName);
   const showPdf = Boolean(blobUrl) && isPdfType(file.mimeType, file.originalName);
   const officeLike = isOfficeType(file.mimeType, file.originalName);
@@ -119,8 +141,11 @@ export function FilePreviewModal({ file, currentUser, onClose, onDownload }: Fil
   return (
     <div className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center bg-[#3B2114]/40 p-0 sm:p-4" onClick={onClose}>
       <div
-        className="flex h-full sm:h-auto max-h-none sm:max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-none sm:rounded-2xl border-0 sm:border border-[#E8D9C4] bg-white shadow-2xl"
+        className="preview-irzar flex h-full sm:h-auto max-h-none sm:max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-none sm:rounded-2xl border-0 sm:border border-[#E8D9C4] bg-white shadow-2xl"
         onClick={(event) => event.stopPropagation()}
+        onCopy={blockCopy}
+        onCut={blockCopy}
+        onContextMenu={blockCopy}
       >
         <div className="flex items-center justify-between border-b border-[#E8D9C4] bg-[#F7F1E8] px-5 py-3">
           <div className="min-w-0">
@@ -128,22 +153,17 @@ export function FilePreviewModal({ file, currentUser, onClose, onDownload }: Fil
             <h3 className="truncate text-sm font-black text-[#4A2C17]">{file.title}</h3>
             <p className="truncate font-mono text-[10px] text-[#6B5344]">{file.originalName}</p>
           </div>
-          <div className="flex items-center gap-2">
-            {canDownload && (
-              <button
-                type="button"
-                onClick={() => onDownload(file)}
-                className="inline-flex items-center gap-1 rounded-lg bg-[#4A2C17] px-3 py-1.5 text-[10px] font-black text-white"
-              >
-                <Download size={12} /> دانلود
-              </button>
-            )}
-            <button type="button" onClick={onClose} className="rounded-lg p-2 text-[#6B5344] hover:bg-white">
-              <X size={16} />
-            </button>
-          </div>
+          <button type="button" onClick={onClose} className="rounded-lg p-2 text-[#6B5344] hover:bg-white">
+            <X size={16} />
+          </button>
         </div>
-        <div className="min-h-[360px] flex-1 overflow-auto bg-[#fbf7f0] p-4">
+        <div
+          className="min-h-[360px] flex-1 overflow-auto bg-[#fbf7f0] p-4"
+          onCopy={blockCopy}
+          onCut={blockCopy}
+          onContextMenu={blockCopy}
+          style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+        >
           {loading && (
             <div className="flex h-full min-h-[320px] flex-col items-center justify-center gap-2 text-[#6B5344]">
               <Loader2 className="animate-spin" size={28} />
@@ -154,50 +174,44 @@ export function FilePreviewModal({ file, currentUser, onClose, onDownload }: Fil
             <div className="flex h-full min-h-[320px] flex-col items-center justify-center gap-3 text-center">
               <FileText className="text-[#8B5A2B]" size={36} />
               <p className="text-sm font-bold text-rose-700">{error}</p>
-              {canDownload && (
-                <button
-                  type="button"
-                  onClick={() => onDownload(file)}
-                  className="inline-flex items-center gap-1 rounded-lg bg-[#4A2C17] px-4 py-2 text-xs font-black text-white"
-                >
-                  <Download size={14} /> دانلود فایل
-                </button>
-              )}
             </div>
           )}
           {!loading && !error && textContent !== null && (
             <div className="space-y-2">
               {extracted && (
-                <p className="text-[11px] font-bold text-[#8B5A2B]">متن استخراج‌شده از فایل آفیس (پیش‌نمایش)</p>
+                <p className="text-[11px] font-bold text-[#8B5A2B]">متن استخراج‌شده از فایل آفیس (پیش‌نمایش — کپی غیرفعال است)</p>
               )}
-              <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-xl border border-[#E8D9C4] bg-white p-4 text-xs leading-6 text-[#4A2C17]">
+              <pre
+                className="preview-irzar max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-xl border border-[#E8D9C4] bg-white p-4 text-sm leading-8 text-[#4A2C17]"
+                onCopy={blockCopy}
+                onCut={blockCopy}
+                onContextMenu={blockCopy}
+              >
                 {textContent}
               </pre>
             </div>
           )}
           {!loading && !error && showImage && blobUrl && (
-            <img src={blobUrl} alt={file.title} className="mx-auto max-h-[70vh] max-w-full rounded-xl object-contain" />
+            <img src={blobUrl} alt={file.title} draggable={false} className="mx-auto max-h-[70vh] max-w-full rounded-xl object-contain" />
           )}
           {!loading && !error && showPdf && blobUrl && (
-            <iframe title={file.title} src={blobUrl} className="h-[70vh] w-full rounded-xl border border-[#E8D9C4] bg-white" />
+            <div className="relative h-[70vh] w-full" onContextMenu={blockCopy}>
+              <iframe
+                title={file.title}
+                src={`${blobUrl}#toolbar=0&navpanes=0&scrollbar=0&download=0`}
+                className="h-full w-full rounded-xl border border-[#E8D9C4] bg-white"
+              />
+              <p className="mt-2 text-center text-[11px] text-[#6B5344]">دانلود از پیش‌نمایش پی‌دی‌اف غیرفعال است. فقط مجوزهای سامانه اعمال می‌شود.</p>
+            </div>
           )}
           {!loading && !error && !textContent && !showImage && !showPdf && (
             <div className="flex h-full min-h-[320px] flex-col items-center justify-center gap-3 text-center">
               <ExternalLink className="text-[#8B5A2B]" size={36} />
               <p className="text-sm font-bold text-[#4A2C17]">
                 {officeLike
-                  ? 'متن قابل‌استخراج در این فایل آفیس پیدا نشد. برای دیدن قالب‌بندی کامل، فایل را دانلود کنید.'
-                  : 'این نوع فایل در مرورگر پیش‌نمایش ندارد. می‌توانید آن را دانلود کنید.'}
+                  ? 'متن قابل‌استخراج در این فایل آفیس پیدا نشد. دانلود از پیش‌نمایش مجاز نیست.'
+                  : 'این نوع فایل در مرورگر پیش‌نمایش ندارد. دانلود فقط از مسیر مجاز سامانه انجام می‌شود.'}
               </p>
-              {canDownload && (
-                <button
-                  type="button"
-                  onClick={() => onDownload(file)}
-                  className="inline-flex items-center gap-1 rounded-lg bg-[#4A2C17] px-4 py-2 text-xs font-black text-white"
-                >
-                  <Download size={14} /> دانلود فایل
-                </button>
-              )}
             </div>
           )}
         </div>

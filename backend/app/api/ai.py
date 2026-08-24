@@ -166,6 +166,7 @@ def chat_with_resources(
     user: User = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ):
+    raise HTTPException(status_code=410, detail="بخش گفت‌وگو با منابع حذف شده است.")
     message = (payload.message or "").strip()
     if not message:
         raise HTTPException(status_code=400, detail="پیام خالی است.")

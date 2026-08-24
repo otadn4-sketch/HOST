@@ -1,5 +1,5 @@
 import React from 'react';
-import { FolderLock, MessageSquareText, Download, Sparkles, User as UserIcon, ClipboardList } from 'lucide-react';
+import { Download, Sparkles, User as UserIcon, ClipboardList } from 'lucide-react';
 import { FileItem, User } from '../types';
 import { formatFileSize } from '../services/storageService';
 import { StorageService } from '../services/storageService';
@@ -39,20 +39,10 @@ export const UserPortal: React.FC<UserPortalProps> = ({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button onClick={() => onNavigate('files')} className="bg-white rounded-2xl p-4 border border-[#EFE6D6] text-right hover:border-[#8B5A2B]">
-          <FolderLock className="w-5 h-5 text-[#8B5A2B] mb-2" />
-          <p className="text-xs font-bold text-[#4A2C17]">مخزن منابع</p>
-          <p className="text-[11px] text-[#5B6573] mt-1">{files.length} فایل در دسترس شما</p>
-        </button>
         <button onClick={() => onNavigate('transactions')} className="bg-white rounded-2xl p-4 border border-[#EFE6D6] text-right hover:border-[#8B5A2B]">
           <ClipboardList className="w-5 h-5 text-[#8B5A2B] mb-2" />
           <p className="text-xs font-bold text-[#4A2C17]">ثبت دستی تحویل</p>
           <p className="text-[11px] text-[#5B6573] mt-1">ثبت اینکه کدام فایل، به چه کسی، در چه تاریخی و برای چه هدفی تحویل شد</p>
-        </button>
-        <button onClick={() => onNavigate('ai_chat')} className="bg-white rounded-2xl p-4 border border-[#EFE6D6] text-right hover:border-[#8B5A2B]">
-          <MessageSquareText className="w-5 h-5 text-[#8B5A2B] mb-2" />
-          <p className="text-xs font-bold text-[#4A2C17]">گفت‌وگو با منابع</p>
-          <p className="text-[11px] text-[#5B6573] mt-1">پرسش از اسناد مجاز با پرامپت سازمانی</p>
         </button>
         <div className="bg-white rounded-2xl p-4 border border-[#EFE6D6]">
           <UserIcon className="w-5 h-5 text-[#8B5A2B] mb-2" />
@@ -64,7 +54,7 @@ export const UserPortal: React.FC<UserPortalProps> = ({
       <div className="bg-white rounded-2xl border border-[#EFE6D6] overflow-hidden">
         <div className="p-4 border-b border-[#EFE6D6] flex items-center justify-between">
           <h2 className="text-sm font-bold text-[#4A2C17]">منابع اخیر در دسترس</h2>
-          <button onClick={() => onNavigate('files')} className="text-[11px] text-[#8B5A2B] font-bold">همه منابع</button>
+          <span className="text-[11px] text-[#6B5344]">پیش‌نمایش از همین فهرست</span>
         </div>
         <div className="divide-y divide-slate-100">
           {(mine.length ? mine : recent).map((file) => (

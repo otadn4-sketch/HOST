@@ -50,8 +50,19 @@ class Settings(BaseSettings):
     phase_1_archive_enabled: bool = True
     phase_2_meetings_enabled: bool = True
     phase_3_recipient_profiles_enabled: bool = True
-    phase_4_sharing_enabled: bool = False
-    phase_5_security_graph_enabled: bool = False
+    phase_4_sharing_enabled: bool = True
+    phase_5_security_graph_enabled: bool = True
+
+    sms_enabled: bool = False
+    sms_base_url: str = ""
+    sms_api_key: str = ""
+    sms_sender: str = ""
+    sms_http_method: str = "POST"
+    sms_content_type: str = "json"
+    sms_url_template: str = ""
+    sms_body_template: str = ""
+    sms_auth_header_name: str = ""
+    sms_timeout_seconds: int = 15
 
     faran_enabled: bool = False
     faran_base_url: str = ""

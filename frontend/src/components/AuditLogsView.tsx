@@ -174,8 +174,9 @@ export const AuditLogsView: React.FC<AuditLogsViewProps> = ({
           <option value="file_upload">بارگذاری فایل</option>
           <option value="file_quarantined">قرنطینه بدافزار</option>
           <option value="permission_change">تغییر سطح دسترسی</option>
-          <option value="ai_chat">گفت‌وگو با منابع</option>
           <option value="ai_summarize">خلاصه‌سازی هوشمند</option>
+          <option value="file_preview_heartbeat">حضور در پیش‌نمایش</option>
+          <option value="sms_sent">ارسال پیامک</option>
           <option value="suspicious_activity">فعالیت مشکوک</option>
         </select>
 

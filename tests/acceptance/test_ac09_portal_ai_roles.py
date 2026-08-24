@@ -73,8 +73,7 @@ def test_ai_chat_and_summarize_and_prompts(client):
     assert up.status_code == 200
     file_id = up.json()["file"]["id"]
     chat = client.post("/api/ai/chat", headers=h, json={"message": "خلاصه منابع چیست؟", "file_ids": [file_id]})
-    assert chat.status_code == 200
-    assert "response" in chat.json()
+    assert chat.status_code == 410
     summary = client.post("/api/ai/summarize", headers=h, json={"file_id": file_id, "mode": "executive"})
     assert summary.status_code == 200
     assert "خلاصه" in summary.json()["summary"] or "چکیده" in summary.json()["summary"]

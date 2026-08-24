@@ -306,6 +306,27 @@ class ScrubJobIn(BaseModel):
     rules: list[str] = []
 
 
+class SmsConfigPatchIn(BaseModel):
+    enabled: Optional[bool] = None
+    base_url: Optional[str] = None
+    api_key: Optional[str] = None
+    sender: Optional[str] = None
+    http_method: Optional[str] = None
+    content_type: Optional[str] = None
+    url_template: Optional[str] = None
+    body_template: Optional[str] = None
+    auth_header_name: Optional[str] = None
+    extra_headers: Optional[dict[str, Any]] = None
+
+
+class SmsSendIn(BaseModel):
+    message: str
+    phones: list[str] = []
+    user_ids: list[str] = []
+    recipient_ids: list[str] = []
+    file_id: Optional[str] = None
+
+
 
 TransactionCreateIn = TransactionCreateIn
 TransactionPatchIn = TransactionPatchIn

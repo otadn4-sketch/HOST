@@ -80,6 +80,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenFileDetails, files }
         بازدید یکتا یعنی چند نفر محتوا را دیده‌اند؛ تعداد مراجعه مجموع پیش‌نمایش‌هاست و یک نفر می‌تواند چند بار مراجعه کند.
       </p>
 
+      <div className="bg-white rounded-2xl p-5 border border-[#E8D9C4] space-y-3">
+        <h2 className="text-sm font-bold text-[#4A2C17]">پیش‌نمایش‌های زنده و اخیر</h2>
+        <p className="text-[11px] text-[#6B5344]">کاربرانی که همین حالا در پیش‌نمایش هستند (ضربان حدود ۴۵ ثانیه).</p>
+        <p className="text-xs font-bold text-[#4A2C17]">در حال مشاهده: {data.kpis.live_previews ?? 0}</p>
+        {(data.live_previews || []).length === 0 ? (
+          <p className="text-xs text-[#6B5344]">کسی الان در پیش‌نمایش نیست.</p>
+        ) : (
+          <ul className="text-xs space-y-1">
+            {(data.live_previews || []).map((row, idx) => (
+              <li key={`${row.user}-${row.file}-${idx}`}>{row.user} — {row.file}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <div className="bg-white rounded-2xl p-5 border border-[#E8D9C4]">
         <h2 className="text-sm font-bold text-[#4A2C17] mb-1">چه فایلی را چه افرادی دیدند</h2>
         <p className="text-[11px] text-[#6B5344] mb-4">هر ستون یک فایل است و رنگ‌ها کاربران بازدیدکننده را نشان می‌دهد.</p>
