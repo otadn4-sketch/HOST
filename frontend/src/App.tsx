@@ -13,6 +13,12 @@ import { AiFileChatView } from './components/AiFileChatView';
 import { UserPortal } from './components/UserPortal';
 import { AiSummarizeModal } from './components/AiSummarizeModal';
 import { PwaInstallHint } from './components/PwaInstallHint';
+import { TransactionLogView } from './components/TransactionLogView';
+import { MeetingLogView } from './components/MeetingLogView';
+import { RecipientProfilesView } from './components/RecipientProfilesView';
+import { SharingAccessView } from './components/SharingAccessView';
+import { RelationshipGraphView } from './components/RelationshipGraphView';
+import { PhaseRoadmapView } from './components/PhaseRoadmapView';
 import { AuthApi, DataApi, mapFile, mapGroup, mapLog, mapPolicy, mapUser } from './services/api';
 import { User, Department, FileItem, AuditLog, SystemSecurityPolicy } from './types';
 import { Lock } from 'lucide-react';
@@ -31,6 +37,7 @@ export default function App() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [portalSummarize, setPortalSummarize] = useState<FileItem | null>(null);
   const [openFileId, setOpenFileId] = useState<string | null>(null);
+  const [logFileId, setLogFileId] = useState<string | null>(null);
   const [navOpen, setNavOpen] = useState(false);
 
   const refreshData = useCallback(async () => {
@@ -147,8 +154,31 @@ export default function App() {
               onRefresh={refreshData}
               initialFileId={openFileId}
               onInitialFileHandled={() => setOpenFileId(null)}
+              onLogDelivery={(file) => {
+                setLogFileId(file.id);
+                setCurrentView('transactions');
+              }}
             />
           )}
+          {currentView === 'transactions' && (
+            <TransactionLogView
+              currentUser={currentUser}
+              files={files}
+              initialFileId={logFileId}
+              onInitialFileHandled={() => setLogFileId(null)}
+            />
+          )}
+          {currentView === 'meetings' && (
+            <MeetingLogView currentUser={currentUser} enabled />
+          )}
+          {currentView === 'recipients' && <RecipientProfilesView enabled />}
+          {currentView === 'phases' && <PhaseRoadmapView />}
+          {currentView === 'sharing' && <SharingAccessView enabled={false} />}
+          {currentView === 'graph' && currentUser.role === 'system_admin' ? (
+            <RelationshipGraphView enabled={false} />
+          ) : currentView === 'graph' ? (
+            <Locked title="گراف محلی" text="این بخش فقط برای مدیر سامانه و روی localhost است." />
+          ) : null}
           {currentView === 'ai_chat' && (
             <AiFileChatView files={files} currentUser={currentUser} departments={departments} />
           )}

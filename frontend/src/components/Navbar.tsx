@@ -69,7 +69,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="min-w-0">
                 <span className="font-bold text-sm text-[#4A2C17] tracking-tight leading-snug block truncate lg:hidden">{APP_SHORT_NAME}</span>
                 <span className="hidden lg:block font-bold text-xs sm:text-sm text-[#4A2C17] tracking-tight leading-snug">{APP_NAME}</span>
-                <p className="hidden sm:block text-[11px] text-[#6B5344] mt-0.5 truncate">پرتال سازمانی شبکه کانون‌های تفکر ایران «ایتان»</p>
+                <p className="hidden sm:block text-[11px] text-[#6B5344] mt-0.5 truncate">بایگانی و ثبت دستی تعامل شبکه کانون‌های تفکر ایران «ایتان»</p>
               </div>
             </div>
           </div>

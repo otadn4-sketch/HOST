@@ -12,7 +12,9 @@
 
 ## داده
 
-جداول عملیاتی: users, groups, sessions, files, file_permissions, audit_logs (append-only), security_policies, recovery_tokens, system_updates, maintenance_state.
+جداول عملیاتی: users, groups, sessions, files, file_permissions, audit_logs (append-only), security_policies, recovery_tokens, system_updates, maintenance_state, external_recipients, interaction_transactions, meeting_logs, share_links, document_scrub_jobs, faran_sync_records.
+
+ارسال خودکار لینک/فایل از طریق پیام‌رسان یا پیامک وجود ندارد؛ تحویل فقط با ثبت دستی تراکنش انجام می‌شود. گراف تعاملات فقط روی localhost در دسترس است.
 
 مسیر فیزیکی فایل هرگز در JSON پاسخ نمی‌آید؛ فقط شناسه تصادفی `stored_vault_name`.
 

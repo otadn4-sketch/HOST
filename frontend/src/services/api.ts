@@ -224,6 +224,18 @@ export const DataApi = {
   dashboard: (range = 'week') => api<any>(`/api/dashboard?range=${range}`),
   updates: () => api<any>('/api/updates'),
   confirmUpdate: (id: string) => api(`/api/updates/${id}/confirm`, { method: 'POST' }),
+  phases: () => api<any>('/api/phases'),
+  transactions: (q = '') => api<{ transactions: any[] }>(`/api/transactions?q=${encodeURIComponent(q)}`),
+  createTransaction: (payload: object) =>
+    api('/api/transactions', { method: 'POST', body: JSON.stringify(payload) }),
+  deleteTransaction: (id: string) => api(`/api/transactions/${id}`, { method: 'DELETE' }),
+  recipients: (q = '') => api<{ recipients: any[] }>(`/api/recipients?q=${encodeURIComponent(q)}`),
+  recipient: (id: string) => api<{ recipient: any }>(`/api/recipients/${id}`),
+  meetings: () => api<{ meetings: any[] }>('/api/meetings'),
+  createMeeting: (payload: object) => api('/api/meetings', { method: 'POST', body: JSON.stringify(payload) }),
+  faranStatus: () => api<{ faran: any }>('/api/faran/status'),
+  faranSync: () => api('/api/faran/sync', { method: 'POST' }),
+  relationshipGraph: () => api<{ graph: any }>('/api/graph/relationships'),
 };
 
 export async function uploadFile(form: FormData) {

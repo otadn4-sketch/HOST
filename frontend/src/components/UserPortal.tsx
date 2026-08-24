@@ -1,5 +1,5 @@
 import React from 'react';
-import { FolderLock, MessageSquareText, Download, Sparkles, User as UserIcon } from 'lucide-react';
+import { FolderLock, MessageSquareText, Download, Sparkles, User as UserIcon, ClipboardList } from 'lucide-react';
 import { FileItem, User } from '../types';
 import { formatFileSize } from '../services/storageService';
 import { StorageService } from '../services/storageService';
@@ -43,6 +43,11 @@ export const UserPortal: React.FC<UserPortalProps> = ({
           <FolderLock className="w-5 h-5 text-[#8B5A2B] mb-2" />
           <p className="text-xs font-bold text-[#4A2C17]">مخزن منابع</p>
           <p className="text-[11px] text-[#5B6573] mt-1">{files.length} فایل در دسترس شما</p>
+        </button>
+        <button onClick={() => onNavigate('transactions')} className="bg-white rounded-2xl p-4 border border-[#EFE6D6] text-right hover:border-[#8B5A2B]">
+          <ClipboardList className="w-5 h-5 text-[#8B5A2B] mb-2" />
+          <p className="text-xs font-bold text-[#4A2C17]">ثبت دستی تحویل</p>
+          <p className="text-[11px] text-[#5B6573] mt-1">ثبت اینکه کدام فایل، به چه کسی، در چه تاریخی و برای چه هدفی تحویل شد</p>
         </button>
         <button onClick={() => onNavigate('ai_chat')} className="bg-white rounded-2xl p-4 border border-[#EFE6D6] text-right hover:border-[#8B5A2B]">
           <MessageSquareText className="w-5 h-5 text-[#8B5A2B] mb-2" />

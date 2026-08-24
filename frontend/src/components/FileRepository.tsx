@@ -28,7 +28,8 @@ import {
   ChevronLeft,
   X,
   Sparkles,
-  Pencil
+  Pencil,
+  ClipboardList
 } from 'lucide-react';
 import { FileItem, User, Department, FileClassification } from '../types';
 import { StorageService, formatFileSize, formatDateTimeFa } from '../services/storageService';
@@ -47,6 +48,7 @@ interface FileRepositoryProps {
   onRefresh: () => void;
   initialFileId?: string | null;
   onInitialFileHandled?: () => void;
+  onLogDelivery?: (file: FileItem) => void;
 }
 
 export const FileRepository: React.FC<FileRepositoryProps> = ({
@@ -59,6 +61,7 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
   onRefresh,
   initialFileId,
   onInitialFileHandled,
+  onLogDelivery,
 }) => {
   const isAdmin = currentUser.role === 'system_admin';
   const [selectedDept, setSelectedDept] = useState<string>('all');
@@ -800,6 +803,15 @@ export const FileRepository: React.FC<FileRepositoryProps> = ({
               )}
 
               <div className="flex items-center gap-2">
+                {currentUser.role !== 'viewer' && (
+                  <button
+                    onClick={() => onLogDelivery?.(selectedFile)}
+                    className="px-3.5 py-2 text-xs bg-[#EFE6D6] text-[#4A2C17] border border-[#E8D9C4] rounded-xl flex items-center gap-1.5 font-bold"
+                  >
+                    <ClipboardList className="w-4 h-4" />
+                    ثبت تحویل دستی
+                  </button>
+                )}
                 <button
                   onClick={() => setPreviewFile(selectedFile)}
                   className="px-3.5 py-2 text-xs bg-[#EFE6D6] text-[#4A2C17] border border-[#E8D9C4] rounded-xl flex items-center gap-1.5 font-bold"

@@ -14,6 +14,12 @@ import {
   RefreshCw,
   MessageSquareText,
   LayoutDashboard,
+  ClipboardList,
+  UsersRound,
+  Contact,
+  Share2,
+  GitFork,
+  Map,
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -43,6 +49,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const mainMenuItems = [
     { id: 'user_portal', label: 'پرتال کاربری', icon: LayoutDashboard, visible: true },
     { id: 'files', label: 'مخزن فایل‌ها و گزارش‌ها', icon: FolderLock, visible: true },
+    { id: 'transactions', label: 'ثبت دستی تحویل', icon: ClipboardList, visible: true },
+    { id: 'meetings', label: 'ثبت جلسات و ارائه‌ها', icon: UsersRound, visible: true },
+    { id: 'recipients', label: 'پروفایل مخاطبان', icon: Contact, visible: true },
+    { id: 'phases', label: 'نقشه راه فازها', icon: Map, visible: true },
     { id: 'ai_chat', label: 'گفت‌وگو با منابع', icon: MessageSquareText, visible: true },
     { id: 'dashboard', label: 'داشبورد مدیریتی و آمار', icon: BarChart3, visible: isAdmin },
     { id: 'users_groups', label: 'مدیریت کاربران، واحدها و نقش‌ها', icon: Users, visible: isAdmin || isGroupAdmin },
@@ -52,6 +62,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'security_policies', label: 'سیاست‌ها، زیرساخت و پرامپت هوش', icon: ShieldCheck, visible: isAdmin },
     { id: 'system_update', label: 'به‌روزرسانی سامانه', icon: RefreshCw, visible: isAdmin },
     { id: 'audit_logs', label: 'لاگ رخدادها و ردگیری', icon: ScrollText, visible: isAdmin || isGroupAdmin },
+    { id: 'sharing', label: 'اشتراک‌گذاری و دسترسی دانه‌ای', icon: Share2, visible: isAdmin },
+    { id: 'graph', label: 'گراف محلی تعاملات', icon: GitFork, visible: isAdmin },
   ];
 
   const go = (view: string) => {
