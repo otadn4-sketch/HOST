@@ -56,3 +56,16 @@ def ensure_runtime_schema(db: DBSession) -> None:
         if "org_role_id" not in cols:
             db.execute(text("ALTER TABLE users ADD COLUMN org_role_id VARCHAR(36)"))
             db.flush()
+    if "files" in tables:
+        file_cols = {c["name"] for c in insp.get_columns("files")}
+        statements = []
+        if "authors" not in file_cols:
+            statements.append("ALTER TABLE files ADD COLUMN authors JSON")
+        if "excel_logged" not in file_cols:
+            statements.append("ALTER TABLE files ADD COLUMN excel_logged JSON")
+        if "faran_remote_id" not in file_cols:
+            statements.append("ALTER TABLE files ADD COLUMN faran_remote_id VARCHAR(128)")
+        for stmt in statements:
+            db.execute(text(stmt))
+        if statements:
+            db.flush()

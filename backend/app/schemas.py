@@ -241,3 +241,75 @@ class UpdateOut(ORMModel):
     created_at: datetime
     error: str = ""
     migration_id: str = ""
+
+
+class TransactionCreateIn(BaseModel):
+    file_id: Optional[str] = None
+    recipient_id: Optional[str] = None
+    recipient_name: str = Field(min_length=1, max_length=200)
+    recipient_organization: str = ""
+    request_origin: str = ""
+    create_recipient: bool = False
+    occurred_at: datetime
+    purpose: str = Field(min_length=1, max_length=500)
+    channel: str = "handoff"
+    notes: str = ""
+    kind: str = "file_delivery"
+
+
+class TransactionPatchIn(BaseModel):
+    recipient_name: Optional[str] = None
+    recipient_organization: Optional[str] = None
+    occurred_at: Optional[datetime] = None
+    purpose: Optional[str] = None
+    channel: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class RecipientCreateIn(BaseModel):
+    full_name: str = Field(min_length=1, max_length=200)
+    organization: str = ""
+    title: str = ""
+    email: str = ""
+    phone: str = ""
+    request_origin: str = ""
+    notes: str = ""
+    tags: list[str] = []
+
+
+class RecipientPatchIn(BaseModel):
+    full_name: Optional[str] = None
+    organization: Optional[str] = None
+    title: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    request_origin: Optional[str] = None
+    notes: Optional[str] = None
+    tags: Optional[list[str]] = None
+    is_active: Optional[bool] = None
+
+
+class MeetingCreateIn(BaseModel):
+    title: str = Field(min_length=1, max_length=300)
+    meeting_kind: str
+    occurred_at: datetime
+    location: str = ""
+    attendees: list[str] = []
+    agenda: str = ""
+    outcome: str = ""
+    notes: str = ""
+    linked_transaction_id: Optional[str] = None
+
+
+class ScrubJobIn(BaseModel):
+    file_id: str
+    rules: list[str] = []
+
+
+
+TransactionCreateIn = TransactionCreateIn
+TransactionPatchIn = TransactionPatchIn
+RecipientCreateIn = RecipientCreateIn
+RecipientPatchIn = RecipientPatchIn
+MeetingCreateIn = MeetingCreateIn
+ScrubJobIn = ScrubJobIn

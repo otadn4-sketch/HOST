@@ -12,7 +12,14 @@ from app.models.entities import (
     Session,
     SystemUpdate,
     User,
+    ExternalRecipient,
+    InteractionTransaction,
+    MeetingLog,
+    ShareLink,
+    DocumentScrubJob,
+    FaranSyncRecord,
 )
+
 
 __all__ = [
     "AiSettings",
@@ -28,4 +35,11 @@ __all__ = [
     "Session",
     "SystemUpdate",
     "User",
+    "ExternalRecipient",
+    "InteractionTransaction",
+    "MeetingLog",
+    "ShareLink",
+    "DocumentScrubJob",
+    "FaranSyncRecord",
 ]
+

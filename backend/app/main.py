@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.api import ai, auth, dashboard, files, groups, health, logs, roles, settings as settings_api, updates, users
+from app.api import ai, auth, dashboard, faran, files, graph, groups, health, logs, meetings, phases, recipients, roles, scrub, settings as settings_api, shares, transactions, updates, users
 from app.config import get_settings
 from app.db import Base, make_engine, make_session_factory
 from app.models import entities  # noqa: F401
@@ -56,6 +56,14 @@ def create_app(overrides: dict | None = None) -> FastAPI:
     app.include_router(dashboard.router)
     app.include_router(settings_api.router)
     app.include_router(updates.router)
+    app.include_router(phases.router)
+    app.include_router(transactions.router)
+    app.include_router(recipients.router)
+    app.include_router(meetings.router)
+    app.include_router(faran.router)
+    app.include_router(shares.router)
+    app.include_router(graph.router)
+    app.include_router(scrub.router)
 
     @app.on_event("startup")
     def _startup() -> None:

@@ -99,4 +99,13 @@ ACTION_TITLES = {
     "system_update": "به‌روزرسانی سامانه",
     "backup_created": "تهیه نسخه پشتیبان",
     "account_locked": "قفل موقت حساب",
+    "transaction_logged": "ثبت دستی تحویل",
+    "transaction_updated": "ویرایش ثبت دستی",
+    "transaction_deleted": "حذف ثبت دستی",
+    "recipient_created": "ایجاد مخاطب بیرونی",
+    "meeting_logged": "ثبت جلسه یا ارائه",
+    "meeting_deleted": "حذف جلسه",
+    "faran_sync": "همگام‌سازی فاران",
+    "document_scrub_stub": "پالایش سند (آزمایشی)",
 }
+

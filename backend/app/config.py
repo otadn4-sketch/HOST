@@ -45,6 +45,19 @@ class Settings(BaseSettings):
     csrf_cookie_name: str = "eytan_csrf"
     session_secure_cookie: bool = True
 
+    # Product roadmap: automated messenger/SMS delivery is permanently off.
+    automated_delivery_enabled: bool = False
+    phase_1_archive_enabled: bool = True
+    phase_2_meetings_enabled: bool = True
+    phase_3_recipient_profiles_enabled: bool = True
+    phase_4_sharing_enabled: bool = False
+    phase_5_security_graph_enabled: bool = False
+
+    faran_enabled: bool = False
+    faran_base_url: str = ""
+    faran_api_token: str = ""
+    faran_allow_network: bool = False
+
     @property
     def is_production(self) -> bool:
         return self.eytan_env.lower() == "production"

@@ -136,6 +136,9 @@ class FileObject(Base):
     download_count: Mapped[int] = mapped_column(Integer, default=0)
     view_count: Mapped[int] = mapped_column(Integer, default=0)
     tags: Mapped[list[str]] = mapped_column(JSON, default=list)
+    authors: Mapped[list[str]] = mapped_column(JSON, default=list)
+    excel_logged: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    faran_remote_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
@@ -261,6 +264,119 @@ class ProcessedBackup(Base):
     created_by: Mapped[str] = mapped_column(String(36), default="system")
     notes: Mapped[str] = mapped_column(Text, default="")
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class ExternalRecipient(Base):
+    """CRM-like external contact (Phase 1 logging + Phase 3 profile)."""
+
+    __tablename__ = "external_recipients"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    full_name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
+    organization: Mapped[str] = mapped_column(String(200), default="")
+    title: Mapped[str] = mapped_column(String(200), default="")
+    email: Mapped[str] = mapped_column(String(254), default="")
+    phone: Mapped[str] = mapped_column(String(64), default="")
+    request_origin: Mapped[str] = mapped_column(String(300), default="")
+    source: Mapped[str] = mapped_column(String(120), default="manual")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    tags: Mapped[list[str]] = mapped_column(JSON, default=list)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_by: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    group_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class InteractionTransaction(Base):
+    """Manual delivery/interaction log. Never created by automated messengers/SMS."""
+
+    __tablename__ = "interaction_transactions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    kind: Mapped[str] = mapped_column(String(32), default="file_delivery", index=True)
+    file_id: Mapped[Optional[str]] = mapped_column(ForeignKey("files.id"), nullable=True, index=True)
+    recipient_id: Mapped[Optional[str]] = mapped_column(ForeignKey("external_recipients.id"), nullable=True, index=True)
+    recipient_name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
+    recipient_organization: Mapped[str] = mapped_column(String(200), default="")
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    purpose: Mapped[str] = mapped_column(String(500), nullable=False)
+    channel: Mapped[str] = mapped_column(String(32), default="handoff", index=True)
+    notes: Mapped[str] = mapped_column(Text, default="")
+    logged_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    group_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class MeetingLog(Base):
+    """Physical meetings and external presentations (Phase 2)."""
+
+    __tablename__ = "meeting_logs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    meeting_kind: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    location: Mapped[str] = mapped_column(String(300), default="")
+    attendees: Mapped[list[str]] = mapped_column(JSON, default=list)
+    agenda: Mapped[str] = mapped_column(Text, default="")
+    outcome: Mapped[str] = mapped_column(Text, default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    linked_transaction_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    logged_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    group_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ShareLink(Base):
+    """Phase 4 placeholder: time-limited share links. Inactive until feature flag."""
+
+    __tablename__ = "share_links"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    file_id: Mapped[str] = mapped_column(ForeignKey("files.id"), nullable=False, index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    audience: Mapped[str] = mapped_column(String(16), default="internal")
+    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    max_downloads: Mapped[int] = mapped_column(Integer, default=0)
+    download_count: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_by: Mapped[str] = mapped_column(String(36), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class DocumentScrubJob(Base):
+    """Phase 5 placeholder: metadata/content scrub before upload or share."""
+
+    __tablename__ = "document_scrub_jobs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    file_id: Mapped[str] = mapped_column(ForeignKey("files.id"), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(32), default="stub", index=True)
+    rules: Mapped[list[str]] = mapped_column(JSON, default=list)
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_by: Mapped[str] = mapped_column(String(36), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class FaranSyncRecord(Base):
+    __tablename__ = "faran_sync_records"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="stub", index=True)
+    direction: Mapped[str] = mapped_column(String(32), default="push_metadata")
+    items_count: Mapped[int] = mapped_column(Integer, default=0)
+    error: Mapped[str] = mapped_column(Text, default="")
+    actor_user_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    details: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
 
 @event.listens_for(AuditLog, "before_update")
