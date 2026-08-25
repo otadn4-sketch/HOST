@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # Interactive first-admin creation. Do not put username or password in this file.
+# Windows PowerShell cannot run this file. Use: .\scripts\create-admin.cmd
 set -euo pipefail
+if [[ -z "${BASH_VERSION:-}" || ! -t 0 ]]; then
+  echo "This script needs an interactive bash terminal."
+  echo "Windows PowerShell: .\\scripts\\create-admin.cmd"
+  echo "Or: powershell -ExecutionPolicy Bypass -File .\\scripts\\create-admin.ps1"
+  exit 1
+fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 

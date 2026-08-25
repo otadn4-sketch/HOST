@@ -17,6 +17,18 @@ cp .env.example .env          # در صورت نیاز؛ bootstrap هم می‌�
 ./scripts/healthcheck.sh      # بررسی سلامت HTTPS یا loopback بک‌اند
 ```
 
+روی **ویندوز / PowerShell** فایل `.sh` را اجرا نکنید (هیچ پرسشی نشان نمی‌دهد). به‌جای آن:
+
+```powershell
+.\scripts\create-admin.cmd
+```
+
+یا:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\create-admin.ps1
+```
+
 اگر ورود ممکن نیست و می‌خواهید **همهٔ کاربران، فایل‌ها و لاگ‌ها** پاک شود (برگشت‌ناپذیر):
 
 ```bash

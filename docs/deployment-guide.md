@@ -69,6 +69,8 @@ docker compose --env-file .env.example config
 ./scripts/create-admin.sh     # نخستین مدیر؛ بدون کاربر پیش‌فرض
 ```
 
+ویندوز PowerShell: `.\scripts\create-admin.cmd` — فایل `.sh` را در PowerShell اجرا نکنید.
+
 سپس گواهی واقعی را جایگزین کنید و `PUBLIC_HOST` / `PUBLIC_ORIGIN` / `CORS_ORIGINS` را روی دامنه نهایی بگذارید.
 
 Production با `change-me-*`، راز کوتاه، `SMS_ENABLED=true` یا `UPDATE_ALLOW_UNSIGNED=true` اجرا نمی‌شود.

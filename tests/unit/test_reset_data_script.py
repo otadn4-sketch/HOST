@@ -32,3 +32,15 @@ def test_create_admin_script_prompts_for_password_and_does_not_hardcode_it():
     assert 'read -r -p "username: " admin' not in text
     assert "change-me" not in text.lower()
     assert "Str0ng-Passw0rd" not in text
+
+
+def test_create_admin_windows_script_prompts_and_does_not_hardcode_password():
+    ps1 = (ROOT / "scripts" / "create-admin.ps1").read_text(encoding="utf-8")
+    cmd = (ROOT / "scripts" / "create-admin.cmd").read_text(encoding="utf-8")
+    assert "Read-Host \"username\"" in ps1
+    assert "Read-Host \"full name\"" in ps1
+    assert "Read-Host \"email\"" in ps1
+    assert 'Read-Host $Prompt -AsSecureString' in ps1
+    assert "create-admin.ps1" in cmd
+    assert "change-me" not in ps1.lower()
+    assert "Str0ng-Passw0rd" not in ps1
