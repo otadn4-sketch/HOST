@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session as DBSession
 
-from app.api.deps import get_current_user, get_db, require_system_admin
+from app.api.deps import get_db, require_system_admin
 from app.models.entities import User
 from app.services.graph import build_relationship_graph
 from app.services.phases import is_loopback_request, require_phase
