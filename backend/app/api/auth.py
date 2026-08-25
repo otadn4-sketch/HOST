@@ -89,11 +89,12 @@ def login(
     ip = request.client.host if request.client else "unknown"
     if not limiter.allow(f"login-ip:{ip}", limit=20, window_seconds=60):
         raise HTTPException(status_code=429, detail="تعداد تلاش‌ها بیش از حد مجاز است. بعداً دوباره تلاش کنید.")
-    if not limiter.allow(f"login-user:{payload.username.lower()}", limit=10, window_seconds=60):
+    if not limiter.allow(f"login-user:{payload.username.strip().lower()}", limit=10, window_seconds=60):
         raise HTTPException(status_code=429, detail="تعداد تلاش‌ها بیش از حد مجاز است. بعداً دوباره تلاش کنید.")
 
     policy = get_or_create_policy(db)
-    user = db.query(User).filter(User.username == payload.username).one_or_none()
+    username = payload.username.strip()
+    user = User.by_username(db, username)
     now = utcnow()
 
     if user is None:
@@ -106,7 +107,7 @@ def login(
             details="تلاش ورود با شناسه نامعتبر",
             severity="warning",
             request=request,
-            username_override=payload.username[:80],
+            username_override=username[:80],
         )
         raise HTTPException(status_code=401, detail=GENERIC_LOGIN_ERROR)
 
@@ -254,7 +255,7 @@ def recovery_request(
     ip = request.client.host if request.client else "unknown"
     if not limiter.allow(f"recovery:{ip}", limit=5, window_seconds=300):
         raise HTTPException(status_code=429, detail="تعداد درخواست بازیابی بیش از حد مجاز است.")
-    user = db.query(User).filter(User.username == payload.username).one_or_none()
+    user = User.by_username(db, payload.username)
     write_audit(
         db,
         user=user,

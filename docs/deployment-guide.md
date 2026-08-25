@@ -75,6 +75,28 @@ Production با `change-me-*`، راز کوتاه، `SMS_ENABLED=true` یا `UPD
 
 بکاپ: `./scripts/backup.sh` — بازیابی: `docs/backup-recovery.md` و `./scripts/restore.sh`. مقصد خارجی اگر دیسک جدا ندارید خالی بماند (`BACKUP_EXTERNAL_PATH=`).
 
+## ریست کامل داده (برگشت‌ناپذیر)
+
+فقط وقتی ورود ممکن نیست و خودتان می‌خواهید همهٔ کاربران، فایل‌های vault، قرنطینه، لاگ‌ها و بکاپ محلی این استک پاک شود. روی **همان ماشینی که Docker و استک اجرا می‌شود**، در پوشهٔ نصب:
+
+```bash
+./scripts/reset-data.sh --dry-run
+./scripts/reset-data.sh --i-understand-this-deletes-all-users-and-files
+# سپس عبارت RESET-EYTAN-DATA را تایپ کنید
+./scripts/create-admin.sh
+```
+
+ویندوز:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\reset-data.ps1 --dry-run
+powershell -ExecutionPolicy Bypass -File .\scripts\reset-data.ps1 --i-understand-this-deletes-all-users-and-files
+```
+
+یا `.\scripts\reset-data.cmd` با همان آرگومان‌ها.
+
+این کار `.env`، گواهی TLS، سورس و volume کد (`live_app` / `live_frontend`) را حذف نمی‌کند. `bootstrap.sh` داده را پاک نمی‌کند. مسیر `BACKUP_EXTERNAL_PATH` روی دیسک خارجی را خودتان در صورت نیاز خالی کنید.
+
 ## تمدید TLS
 
 مسیر گواهی از env خوانده می‌شود. تمدید با ابزار داخلی سازمان (نه ACME اجباری) و reload Nginx.

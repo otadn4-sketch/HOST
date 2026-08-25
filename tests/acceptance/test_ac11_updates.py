@@ -92,7 +92,7 @@ def test_signed_update_confirm_installs_and_blocks_second_success(client, tmp_pa
 
     sk = SigningKey.generate()
     get_settings().update_public_key = sk.verify_key.encode().hex()
-    zpath = _signed_zip(tmp_path, sk, version="1.5.1")
+    zpath = _signed_zip(tmp_path, sk, version="9.9.9")
 
     with zpath.open("rb") as fh:
         uploaded = client.post(

@@ -14,6 +14,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     event,
+    func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
@@ -88,6 +89,14 @@ class User(Base):
     password_changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     group: Mapped[Optional[Group]] = relationship(back_populates="users")
+
+    @classmethod
+    def by_username(cls, db, username: str) -> Optional["User"]:
+        name = (username or "").strip()
+        if not name:
+            return None
+        return db.query(cls).filter(func.lower(cls.username) == name.lower()).one_or_none()
+
     org_role: Mapped[Optional["OrgRole"]] = relationship()
     sessions: Mapped[list["Session"]] = relationship(back_populates="user")
 

@@ -31,7 +31,12 @@ def create_admin(username: str, full_name: str, email: str, password: str, group
         )
         if err:
             raise SystemExit(err)
-        if db.query(User).filter(User.username == username).one_or_none():
+        username = username.strip()
+        full_name = full_name.strip()
+        email = email.strip()
+        if not username:
+            raise SystemExit("نام کاربری خالی است.")
+        if User.by_username(db, username):
             raise SystemExit("این نام کاربری موجود است.")
         group = db.query(Group).filter(Group.code == group_code).one_or_none()
         user = User(
