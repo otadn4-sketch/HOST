@@ -14,7 +14,7 @@
 
 جداول عملیاتی: users, groups, sessions, files, file_permissions, audit_logs (append-only), security_policies, recovery_tokens, system_updates, maintenance_state, external_recipients, interaction_transactions, meeting_logs, share_links, document_scrub_jobs, faran_sync_records.
 
-ارسال خودکار لینک/فایل از طریق پیام‌رسان یا پیامک در production وجود ندارد و تا تصمیم کتبی جدید نباید فعال شود. تحویل با ثبت دستی تراکنش انجام می‌شود (فایل، مخاطب، تاریخ، هدف، کانال، یادداشت). گراف تعاملات فقط روی localhost در دسترس است.
+ارسال خودکار لینک/فایل از طریق پیام‌رسان یا پیامک در production وجود ندارد و تا تصمیم کتبی جدید نباید فعال شود. تحویل با ثبت دستی تراکنش انجام می‌شود. اشتراک فاز ۴ فقط درون‌شبکه و بدون پیوند عمومی است. گراف تعاملات در production داده برنمی‌گرداند.
 
 مسیر فیزیکی فایل هرگز در JSON پاسخ نمی‌آید؛ فقط شناسه تصادفی `stored_vault_name`.
 

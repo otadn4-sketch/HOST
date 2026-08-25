@@ -18,4 +18,12 @@ def health():
 def ready(db: DBSession = Depends(get_db), settings: Settings = Depends(get_settings)):
     db.execute(text("SELECT 1"))
     clam = True if settings.clamav_disabled else ping(settings.clamd_host, settings.clamd_port)
-    return {"status": "ready", "database": True, "clamav": clam}
+    from app.services.backup import backup_path_is_isolated
+
+    isolated = backup_path_is_isolated(settings)
+    return {
+        "status": "ready" if isolated else "degraded",
+        "database": True,
+        "clamav": clam,
+        "backup_path_isolated": isolated,
+    }

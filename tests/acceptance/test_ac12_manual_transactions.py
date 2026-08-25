@@ -146,8 +146,8 @@ def test_ac12_phases_faran_stub_and_graph_isolation(client):
     assert sync.status_code == 200
     assert sync.json()["sync"]["status"] == "stub"
 
-    shares = client.post("/api/shares", headers=headers, json={"file_id": "x"})
-    assert shares.status_code in {403, 501}
+    shares = client.post("/api/shares", headers=headers, json={"file_id": "x", "grantee_user_id": "y"})
+    assert shares.status_code in {403, 422}
 
     graph = client.get("/api/graph/relationships", headers=headers)
     assert graph.status_code == 403
@@ -156,12 +156,28 @@ def test_ac12_phases_faran_stub_and_graph_isolation(client):
 
     settings = get_settings()
     settings.phase_5_security_graph_enabled = True
-    public = client.get("/api/graph/relationships", headers={**headers, "Host": "files.example.org"})
-    assert public.status_code == 403
-    local = client.get("/api/graph/relationships", headers={**headers, "Host": "localhost"})
+    spoofed = client.get(
+        "/api/graph/relationships",
+        headers={**headers, "X-Forwarded-For": "203.0.113.10"},
+    )
+    assert spoofed.status_code == 403
+    local = client.get("/api/graph/relationships", headers=headers)
     assert local.status_code == 200
     assert "graph" in local.json()
+    settings.eytan_env = "production"
+    production = client.get("/api/graph/relationships", headers=headers)
+    assert production.status_code == 403
+    settings.eytan_env = "development"
+    client.post("/api/auth/logout", headers=headers)
+    seed_user("alice", "user", email="alice-graph@eytan.local")
+    login(client, "alice")
+    alice_headers = auth_header(client)
+    denied_graph = client.get("/api/graph/relationships", headers=alice_headers)
+    assert denied_graph.status_code == 403
     settings.phase_5_security_graph_enabled = False
+    client.post("/api/auth/logout", headers=alice_headers)
+    login(client, "admin")
+    headers = auth_header(client)
 
     meeting = client.post(
         "/api/meetings",

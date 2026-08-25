@@ -122,4 +122,5 @@ def _serialize_job(job: DocumentScrubJob) -> dict:
         "result_file_id": job.result_file_id,
         "redacted_count": job.redacted_count,
         "applied": job.status == "completed",
+        "publication_ready": job.status == "completed",
     }

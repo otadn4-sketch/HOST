@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     update_agent_url: str = "http://update-agent:8787"
     update_allow_unsigned: bool = False
     backup_encryption_key: str = ""
+    backup_external_path: str = ""
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.0-flash"
 
@@ -133,8 +134,17 @@ def validate_runtime_settings(settings: Settings) -> None:
     elif any(marker in db for marker in INSECURE_DATABASE_MARKERS):
         problems.append("DATABASE_URL still contains a sample or default credential")
     bak = (settings.backup_encryption_key or "").strip()
-    if len(bak) < 64 or bak == "change-me-64-hex-chars" or bak == "0" * 64:
+    from app.services.backup import WEAK_BACKUP_KEYS, backup_path_is_isolated, require_backup_key
+
+    if bak in WEAK_BACKUP_KEYS or len(bak) < 64:
         problems.append("BACKUP_ENCRYPTION_KEY must be a unique 64-hex value (no sample placeholder)")
+    else:
+        try:
+            require_backup_key(bak, production=True)
+        except ValueError:
+            problems.append("BACKUP_ENCRYPTION_KEY must be a unique 64-hex value (no sample placeholder)")
+    if not backup_path_is_isolated(settings):
+        problems.append("BACKUP_PATH must be separate from vault and quarantine paths")
     if settings.sms_enabled:
         problems.append("SMS_ENABLED must remain false in production until a written decision")
     if settings.automated_delivery_enabled:

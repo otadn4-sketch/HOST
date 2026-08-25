@@ -18,7 +18,7 @@ SUPPORTED_RULES = (
 EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b")
 IRAN_MOBILE_RE = re.compile(r"(?:\+98|0098|0)?9\d{9}\b")
 NATIONAL_ID_RE = re.compile(r"\b\d{10}\b")
-RECOMMENDATION_LINE_RE = re.compile(r"(?im)^.*پیشنهاد.*$")
+RECOMMENDATION_RE = re.compile(r"(?im)پیشنهاد[^<\n]*")
 
 TEXT_EXTENSIONS = {"txt", "csv", "md", "html", "htm"}
 OFFICE_EXTENSIONS = {"docx"}
@@ -48,7 +48,7 @@ def redact_text(text: str, rules: list[str]) -> tuple[str, int]:
         out, n = NATIONAL_ID_RE.subn(REDACTION, out)
         count += n
     if "remove_recommendation_sections" in rules:
-        out, n = RECOMMENDATION_LINE_RE.subn(REDACTION, out)
+        out, n = RECOMMENDATION_RE.subn(REDACTION, out)
         count += n
     return out, count
 
@@ -101,10 +101,14 @@ def apply_scrub(data: bytes, *, extension: str, mime: str, rules: list[str]) -> 
         return {
             "status": "unavailable",
             "applied": False,
+            "publication_ready": False,
             "rules": selected,
             "redacted_count": 0,
             "output": None,
-            "note": "پالایش PDF در این نسخه fail-safe است: بدون کتابخانهٔ کامل متادیتا، فایل تغییر داده نشد و امن تلقی نمی‌شود.",
+            "note": (
+                "پالایش محتوای PDF در این نسخه fail-safe است: فایل تغییر داده نشد "
+                "و امن یا آمادهٔ انتشار تلقی نمی‌شود."
+            ),
         }
 
     if ext in OFFICE_EXTENSIONS or mime in {
@@ -116,6 +120,7 @@ def apply_scrub(data: bytes, *, extension: str, mime: str, rules: list[str]) -> 
             return {
                 "status": "failed",
                 "applied": False,
+                "publication_ready": False,
                 "rules": selected,
                 "redacted_count": 0,
                 "output": None,
@@ -124,6 +129,7 @@ def apply_scrub(data: bytes, *, extension: str, mime: str, rules: list[str]) -> 
         return {
             "status": "completed",
             "applied": True,
+            "publication_ready": True,
             "rules": selected,
             "redacted_count": count,
             "output": output,
@@ -135,6 +141,7 @@ def apply_scrub(data: bytes, *, extension: str, mime: str, rules: list[str]) -> 
         return {
             "status": "completed",
             "applied": True,
+            "publication_ready": True,
             "rules": selected,
             "redacted_count": count,
             "output": text.encode("utf-8"),
@@ -144,10 +151,11 @@ def apply_scrub(data: bytes, *, extension: str, mime: str, rules: list[str]) -> 
     return {
         "status": "unavailable",
         "applied": False,
+        "publication_ready": False,
         "rules": selected,
         "redacted_count": 0,
         "output": None,
-        "note": "قالب فایل برای پالایش پشتیبانی نمی‌شود؛ فایل اصلی تغییر نکرد و امن تلقی نشد.",
+        "note": "قالب فایل برای پالایش پشتیبانی نمی‌شود؛ فایل اصلی تغییر نکرد و امن یا آمادهٔ انتشار تلقی نشد.",
     }
 
 

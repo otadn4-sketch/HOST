@@ -1,24 +1,47 @@
 # پشتیبان‌گیری و بازیابی
 
-## چه چیزی باید ذخیره شود
+بکاپ دیتابیس و فایل‌های vault **جدا** و با AES-256-GCM رمز می‌شوند. مسیر `BACKUP_PATH` باید بیرون از vault و quarantine باشد.
 
-- dump پایگاه PostgreSQL (`pg_dump -Fc`)
-- volume فایل‌های vault
-- **نه** قرنطینه موقت، **نه** `.env` داخل همان آرشیو بدون رمزگذاری جداگانه
+## چه چیزی ذخیره می‌شود
 
-## رمزگذاری
+- `eytan-db-<timestamp>.bin` : dump پایگاه (sqlite file bytes یا `pg_dump`)
+- `eytan-vault-<timestamp>.bin` : tar رمزنگاری‌شدهٔ vault
+- قرنطینه موقت و `.env` داخل این آرشیوها نیستند
 
-`BACKUP_ENCRYPTION_KEY` (۳۲ بایت hex) جدا از رمز دیتابیس نگهداری شود. `app.services.backup` از AES-256-GCM استفاده می‌کند.
+کلید: `BACKUP_ENCRYPTION_KEY` فقط ۶۴ رقم hex منحصربه‌فرد، جدا از رمز دیتابیس. مقدار نمونه یا ضعیف در production رد می‌شود و در مخزن ثبت نمی‌شود.
 
-## تناوب پیشنهادی (قابل توافق)
+مقصد خارجی اختیاری: `BACKUP_EXTERNAL_PATH`. اگر خالی یا ناموجود باشد، فقط کپی محلی در `BACKUP_PATH` نوشته می‌شود.
 
-روزانه پایگاه، روزانه vault، نگهداری روی دیسک جداگانه. آزمون بازیابی حداقل ماهی یک‌بار.
+## تهیه بکاپ
 
-## آزمون بازیابی
+```bash
+./scripts/backup.sh
+# یا
+PYTHONPATH=backend python3 -m app.cli backup --note "daily"
+```
 
-1. در محیط آزمایشی compose جداگانه
-2. restore دیتابیس با `pg_restore`
-3. decrypt و بازگردانی vault
-4. ورود مدیر و دانلود یک فایل نمونه و تطبیق SHA-256
+دادهٔ زنده حذف یا reset نمی‌شود.
 
-اسکریپت کمکی: `scripts/backup.sh`. بازیابی تعمداً غیرخودکار است تا از بازنویسی اشتباه جلوگیری شود.
+## بازیابی کنترل‌شده
+
+بازیابی پیش‌فرض به vault زنده نمی‌نویسد:
+
+```bash
+DB_ARCHIVE=/var/lib/eytan/backups/eytan-db-....bin \
+VAULT_ARCHIVE=/var/lib/eytan/backups/eytan-vault-....bin \
+DEST_VAULT=/tmp/eytan-restore-vault \
+DEST_DB=/tmp/eytan-restore.dump \
+./scripts/restore.sh
+```
+
+بارگذاری dump در PostgreSQL فقط روی یک پایگاه **جدا** و با دستور صریح انجام شود:
+
+```bash
+pg_restore --clean --if-exists -U eytan -d eytan_restore < /tmp/eytan-restore.dump
+```
+
+آزمون بازیابی: یک دادهٔ نمونه را backup و restore کنید و SHA-256 فایل را مقایسه کنید. این کار روی دادهٔ production اجرا نشود.
+
+## تناوب پیشنهادی
+
+روزانه پایگاه و vault، نگهداری روی دیسک جدا. آزمون بازیابی دوره‌ای.

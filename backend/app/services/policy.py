@@ -92,6 +92,17 @@ def ensure_runtime_schema(db: DBSession) -> None:
             db.execute(text(stmt))
         if statements:
             db.flush()
+    if "share_links" in tables:
+        share_cols = {c["name"] for c in insp.get_columns("share_links")}
+        if "grantee_user_id" not in share_cols:
+            db.execute(text("ALTER TABLE share_links ADD COLUMN grantee_user_id VARCHAR(36)"))
+        if "can_view" not in share_cols:
+            db.execute(text("ALTER TABLE share_links ADD COLUMN can_view BOOLEAN DEFAULT 1"))
+        if "can_download" not in share_cols:
+            db.execute(text("ALTER TABLE share_links ADD COLUMN can_download BOOLEAN DEFAULT 0"))
+        if "purpose" not in share_cols:
+            db.execute(text("ALTER TABLE share_links ADD COLUMN purpose TEXT DEFAULT ''"))
+        db.flush()
     if "document_scrub_jobs" in tables:
         scrub_cols = {c["name"] for c in insp.get_columns("document_scrub_jobs")}
         if "result_file_id" not in scrub_cols:

@@ -56,6 +56,7 @@ def phase_status(settings: Settings | None = None) -> dict:
         "sms_enabled": False if settings.is_production else bool(settings.sms_enabled),
         "sms_outbound_allowed": sms_outbound_allowed(settings),
         "graph_localhost_only": True,
+        "graph_production_disabled": settings.is_production,
         "automated_delivery_note": (
             "ارسال خودکار لینک یا فایل از طریق پیام‌رسان و پیامک منسوخ است و در production "
             "تا تصمیم کتبی جدید غیرفعال می‌ماند. سامانه فقط ثبت دستی می‌کند: فایل، مخاطب، تاریخ، هدف، کانال، یادداشت."
@@ -77,20 +78,25 @@ def require_phase(flag_name: str, message: str) -> None:
 
 
 def is_loopback_request(request: Request) -> bool:
+    """Local-only graph access. Production never returns graph data.
+
+    Peer address is required. X-Forwarded-* cannot make a remote client look local.
+    """
     settings = get_settings()
-    host = (request.headers.get("host") or "").split(":")[0].lower()
-    loopback_hosts = {"localhost", "127.0.0.1", "::1"}
-    if not settings.is_production:
-        loopback_hosts.add("testserver")
-    if host not in loopback_hosts:
-        return False
-    forwarded = (request.headers.get("x-forwarded-host") or "").split(",")[0].strip().split(":")[0].lower()
-    if forwarded and forwarded not in loopback_hosts:
-        return False
     if settings.is_production:
-        forwarded_for = (request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
-        if forwarded_for and forwarded_for not in {"127.0.0.1", "::1", "localhost"}:
-            return False
+        return False
+    peer = ""
+    if request.client and request.client.host:
+        peer = request.client.host.strip().strip("[]").split("%")[0].lower()
+    loopback_peers = {"127.0.0.1", "::1", "localhost", "testclient"}
+    if peer not in loopback_peers:
+        return False
+    forwarded_host = (request.headers.get("x-forwarded-host") or "").split(",")[0].strip().split(":")[0].lower()
+    forwarded_for = (request.headers.get("x-forwarded-for") or "").split(",")[0].strip().split(":")[0].lower()
+    if forwarded_host and forwarded_host not in {"localhost", "127.0.0.1", "::1", "testserver"}:
+        return False
+    if forwarded_for and forwarded_for not in {"127.0.0.1", "::1", "localhost", "testclient"}:
+        return False
     return True
 
 

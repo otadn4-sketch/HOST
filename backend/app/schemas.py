@@ -301,6 +301,16 @@ class MeetingCreateIn(BaseModel):
     linked_transaction_id: Optional[str] = None
 
 
+class ShareCreateIn(BaseModel):
+    file_id: str
+    grantee_user_id: str
+    can_download: bool = False
+    expires_at: Optional[datetime] = None
+    max_downloads: int = 0
+    purpose: str = ""
+    audience: str = "internal"
+
+
 class ScrubJobIn(BaseModel):
     file_id: str
     rules: list[str] = []

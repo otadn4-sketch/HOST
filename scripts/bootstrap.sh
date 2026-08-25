@@ -36,6 +36,11 @@ if [[ ! -f infra/nginx/certs/fullchain.pem ]]; then
 fi
 
 chmod 600 infra/nginx/certs/privkey.pem || true
+if ! command -v docker >/dev/null 2>&1; then
+  echo "docker is not installed; wrote local config/certs only. Install Docker Compose v2 and re-run ./scripts/bootstrap.sh"
+  echo "existing data was not modified."
+  exit 0
+fi
 docker compose up -d --build
 echo "waiting for backend health..."
 for i in $(seq 1 60); do

@@ -187,7 +187,9 @@ export default function App() {
           {currentView === 'files' && currentUser.role !== 'system_admin' && currentUser.role !== 'group_admin' && (
             <Locked title="مخزن فایل‌ها و گزارش‌ها" text="این بخش فقط برای مدیران سامانه قابل مشاهده است." />
           )}
-          {currentView === 'sharing' && <SharingAccessView enabled={features.sharing} />}
+          {currentView === 'sharing' && (
+            <SharingAccessView enabled={features.sharing} currentUser={currentUser} files={files} />
+          )}
           {currentView === 'graph' && currentUser.role === 'system_admin' && features.graph ? (
             <RelationshipGraphView enabled />
           ) : currentView === 'graph' ? (

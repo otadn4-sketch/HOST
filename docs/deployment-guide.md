@@ -57,14 +57,23 @@ docker volume rm -f <نام-volume-که-live_frontend-دارد>
 docker compose up -d --build
 ```
 
-## مراحل نصب نخست
+## مراحل نصب نخست (محیط پاک)
 
-1. `git clone` یا انتقال bundle آفلاین
-2. `./scripts/bootstrap.sh`
-3. جایگزینی گواهی در `infra/nginx/certs` با گواهی دامنه واقعی
-4. تنظیم `PUBLIC_HOST` و `PUBLIC_ORIGIN` و `CORS_ORIGINS` روی دامنه نهایی
-5. `./scripts/create-admin.sh`
-6. باز کردن فقط پورت‌های ۸۰/۴۴۳؛ پورت PostgreSQL و ClamAV نباید به شبکه عمومی publish شوند
+این مسیر دادهٔ موجود را پاک نمی‌کند. `.env.example` حساب یا کلید قابل‌استفاده ندارد.
+
+```bash
+cp .env.example .env          # اگر .env وجود ندارد؛ bootstrap هم همین کار را می‌کند
+./scripts/bootstrap.sh        # راز تصادفی، گواهی آزمایشی، docker compose up (بدون reset دیتابیس)
+docker compose --env-file .env.example config
+./scripts/healthcheck.sh      # /api/health
+./scripts/create-admin.sh     # نخستین مدیر؛ بدون کاربر پیش‌فرض
+```
+
+سپس گواهی واقعی را جایگزین کنید و `PUBLIC_HOST` / `PUBLIC_ORIGIN` / `CORS_ORIGINS` را روی دامنه نهایی بگذارید.
+
+Production با `change-me-*`، راز کوتاه، `SMS_ENABLED=true` یا `UPDATE_ALLOW_UNSIGNED=true` اجرا نمی‌شود.
+
+بکاپ: `./scripts/backup.sh` — بازیابی: `docs/backup-recovery.md` و `./scripts/restore.sh`. مقصد خارجی اگر دیسک جدا ندارید خالی بماند (`BACKUP_EXTERNAL_PATH=`).
 
 ## تمدید TLS
 

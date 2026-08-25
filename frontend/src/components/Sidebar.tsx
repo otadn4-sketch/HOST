@@ -62,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'security_policies', label: 'سیاست‌ها، زیرساخت و پرامپت هوش', icon: ShieldCheck, visible: isAdmin },
     { id: 'system_update', label: 'به‌روزرسانی سامانه', icon: RefreshCw, visible: isAdmin },
     { id: 'audit_logs', label: 'لاگ رخدادها و ردگیری', icon: ScrollText, visible: isAdmin || isGroupAdmin },
-    { id: 'sharing', label: 'اشتراک‌گذاری و دسترسی دانه‌ای', icon: Share2, visible: isAdmin && features.sharing },
+    { id: 'sharing', label: 'اشتراک‌گذاری درون‌شبکه‌ای', icon: Share2, visible: !isViewer && features.sharing },
     { id: 'graph', label: 'گراف محلی تعاملات', icon: GitFork, visible: isAdmin && features.graph },
   ];
 

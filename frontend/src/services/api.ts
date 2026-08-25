@@ -243,6 +243,29 @@ export const DataApi = {
     api('/api/sms/config', { method: 'PUT', body: JSON.stringify(payload) }),
   smsDirectory: () => api<{ users: any[]; recipients: any[] }>('/api/sms/directory'),
   sendSms: (payload: object) => api<{ sent: number; failed: number }>('/api/sms/send', { method: 'POST', body: JSON.stringify(payload) }),
+  shares: () => api<{ shares: any[] }>('/api/shares'),
+  shareDirectory: () => api<{ users: any[] }>('/api/shares/directory'),
+  createShare: (payload: object) => api<{ share: any }>('/api/shares', { method: 'POST', body: JSON.stringify(payload) }),
+  revokeShare: (id: string) => api(`/api/shares/${id}/revoke`, { method: 'POST' }),
+  downloadShare: async (id: string, filename: string) => {
+    const csrf = readCookie('eytan_csrf');
+    const res = await fetch(`/api/shares/${id}/download`, {
+      credentials: 'include',
+      headers: { 'X-CSRF-Token': csrf },
+    });
+    if (!res.ok) {
+      throw new ApiError(res.status, 'دریافت فایل از مسیر اشتراک ممکن نیست.');
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  },
 };
 
 export async function uploadFile(form: FormData) {
