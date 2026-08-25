@@ -46,7 +46,7 @@ def test_admin_download_preview_and_unique_views(client):
         db.close()
 
     suspicious_dl = client.get(f"/api/files/{file_id}/download", headers=ha)
-    assert suspicious_dl.status_code == 200
+    assert suspicious_dl.status_code in {403, 404}
 
     malware_up = client.post(
         "/api/files",

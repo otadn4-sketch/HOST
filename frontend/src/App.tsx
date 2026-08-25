@@ -18,7 +18,6 @@ import { RecipientProfilesView } from './components/RecipientProfilesView';
 import { SharingAccessView } from './components/SharingAccessView';
 import { RelationshipGraphView } from './components/RelationshipGraphView';
 import { FilePreviewModal } from './components/FilePreviewModal';
-import { SmsSendView } from './components/SmsSendView';
 import { AuthApi, DataApi, mapFile, mapGroup, mapLog, mapPolicy, mapUser } from './services/api';
 import { User, Department, FileItem, AuditLog, SystemSecurityPolicy } from './types';
 import { Lock } from 'lucide-react';
@@ -40,6 +39,7 @@ export default function App() {
   const [logFileId, setLogFileId] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
   const [navOpen, setNavOpen] = useState(false);
+  const [features, setFeatures] = useState({ sms: false, graph: false, sharing: false });
 
   const refreshData = useCallback(async () => {
     const [g, f, p] = await Promise.all([DataApi.groups(), DataApi.files(searchQuery), DataApi.policy()]);
@@ -69,6 +69,19 @@ export default function App() {
         setCurrentView('user_portal');
       }
       await refreshData();
+      try {
+        const phases = await DataApi.phases();
+        const flags = Object.fromEntries((phases.phases || []).map((item: any) => [item.flag, item.enabled]));
+        const host = window.location.hostname;
+        const localHost = host === 'localhost' || host === '127.0.0.1';
+        setFeatures({
+          sms: !!phases.sms_outbound_allowed,
+          graph: !!flags.phase_5_security_graph_enabled && localHost,
+          sharing: !!flags.phase_4_sharing_enabled,
+        });
+      } catch {
+        setFeatures({ sms: false, graph: false, sharing: false });
+      }
     } catch {
       setCurrentUser(null);
     } finally {
@@ -130,6 +143,7 @@ export default function App() {
           onOpenUploadModal={handleOpenUploadModal}
           mobileOpen={navOpen}
           onMobileClose={() => setNavOpen(false)}
+          features={features}
         />
         <main className="flex-1 p-3 sm:p-6 lg:p-8 overflow-y-auto min-w-0 max-w-5xl pb-24 lg:pb-8">
           {currentView === 'user_portal' && (
@@ -173,16 +187,14 @@ export default function App() {
           {currentView === 'files' && currentUser.role !== 'system_admin' && currentUser.role !== 'group_admin' && (
             <Locked title="مخزن فایل‌ها و گزارش‌ها" text="این بخش فقط برای مدیران سامانه قابل مشاهده است." />
           )}
-          {currentView === 'sharing' && <SharingAccessView enabled />}
-          {currentView === 'graph' && currentUser.role === 'system_admin' ? (
+          {currentView === 'sharing' && <SharingAccessView enabled={features.sharing} />}
+          {currentView === 'graph' && currentUser.role === 'system_admin' && features.graph ? (
             <RelationshipGraphView enabled />
           ) : currentView === 'graph' ? (
-            <Locked title="گراف تعاملات" text="این بخش فقط برای مدیر سامانه است." />
+            <Locked title="گراف تعاملات" text="گراف فقط روی localhost و پس از فعال‌سازی فاز ۵ در دسترس است؛ در production عمومی غیرفعال است." />
           ) : null}
-          {currentView === 'sms' && (currentUser.role === 'system_admin' || currentUser.role === 'group_admin') ? (
-            <SmsSendView currentUser={currentUser} />
-          ) : currentView === 'sms' ? (
-            <Locked title="پیامک" text="ارسال پیامک فقط برای مدیران مجاز است." />
+          {currentView === 'sms' ? (
+            <Locked title="پیامک" text="ارسال پیامک و هر ارتباط خروجی تا تصمیم کتبی جدید در production غیرفعال است. برای تحویل فایل از ثبت دستی استفاده کنید." />
           ) : null}
           {currentView === 'dashboard' && (
             currentUser.role === 'system_admin' ? (

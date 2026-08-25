@@ -106,6 +106,7 @@ ACTION_TITLES = {
     "meeting_logged": "ثبت جلسه یا ارائه",
     "meeting_deleted": "حذف جلسه",
     "faran_sync": "همگام‌سازی فاران",
+    "document_scrub": "پالایش سند",
     "document_scrub_stub": "پالایش سند (آزمایشی)",
     "file_preview_heartbeat": "حضور در پیش‌نمایش",
     "sms_sent": "ارسال پیامک",

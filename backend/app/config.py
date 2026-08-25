@@ -5,6 +5,24 @@ from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+INSECURE_SECRET_VALUES = {
+    "",
+    "change-me-in-production",
+    "change-me-with-a-long-random-value",
+    "insecure-dev-only-override-in-env",
+    "secret",
+    "password",
+    "admin",
+}
+
+INSECURE_DATABASE_MARKERS = (
+    "eytan:eytan@",
+    "change-me-with-a-long-random-value",
+    "change-me-in-production",
+    "postgres:postgres@",
+)
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -13,8 +31,8 @@ class Settings(BaseSettings):
     public_origin: str = "https://localhost"
     cors_origins: str = "https://localhost"
 
-    database_url: str = "postgresql+psycopg://eytan:eytan@db:5432/eytan"
-    session_secret: str = "insecure-dev-only-override-in-env"
+    database_url: str = ""
+    session_secret: str = ""
 
     default_max_file_size_bytes: int = 52_428_800
     vault_path: Path = Path("/var/lib/eytan/vault")
@@ -31,6 +49,7 @@ class Settings(BaseSettings):
     update_public_key: str = ""
     update_agent_token: str = ""
     update_agent_url: str = "http://update-agent:8787"
+    update_allow_unsigned: bool = False
     backup_encryption_key: str = ""
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.0-flash"
@@ -45,13 +64,13 @@ class Settings(BaseSettings):
     csrf_cookie_name: str = "eytan_csrf"
     session_secure_cookie: bool = True
 
-    # Product roadmap: automated messenger/SMS delivery is permanently off.
+    # Product rule: automated messenger/SMS delivery stays off until a written decision.
     automated_delivery_enabled: bool = False
     phase_1_archive_enabled: bool = True
     phase_2_meetings_enabled: bool = True
     phase_3_recipient_profiles_enabled: bool = True
-    phase_4_sharing_enabled: bool = True
-    phase_5_security_graph_enabled: bool = True
+    phase_4_sharing_enabled: bool = False
+    phase_5_security_graph_enabled: bool = False
 
     sms_enabled: bool = False
     sms_base_url: str = ""
@@ -76,6 +95,58 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> List[str]:
         return [item.strip() for item in self.cors_origins.split(",") if item.strip()]
+
+
+def apply_production_locks(settings: Settings) -> None:
+    """Hard-disable outbound messaging and unsigned updates in production."""
+    if not settings.is_production:
+        return
+    settings.sms_enabled = False
+    settings.automated_delivery_enabled = False
+    settings.update_allow_unsigned = False
+
+
+def sms_outbound_allowed(settings: Settings | None = None) -> bool:
+    settings = settings or get_settings()
+    if settings.is_production:
+        return False
+    return bool(settings.sms_enabled)
+
+
+def unsigned_updates_allowed(settings: Settings | None = None) -> bool:
+    settings = settings or get_settings()
+    if settings.is_production:
+        return False
+    return bool(settings.update_allow_unsigned)
+
+
+def validate_runtime_settings(settings: Settings) -> None:
+    if not settings.is_production:
+        return
+    problems: list[str] = []
+    secret = (settings.session_secret or "").strip()
+    if secret in INSECURE_SECRET_VALUES or len(secret) < 32:
+        problems.append("SESSION_SECRET must be a unique value at least 32 characters (no sample placeholder)")
+    db = settings.database_url or ""
+    if not db.strip():
+        problems.append("DATABASE_URL is required in production")
+    elif any(marker in db for marker in INSECURE_DATABASE_MARKERS):
+        problems.append("DATABASE_URL still contains a sample or default credential")
+    bak = (settings.backup_encryption_key or "").strip()
+    if len(bak) < 64 or bak == "change-me-64-hex-chars" or bak == "0" * 64:
+        problems.append("BACKUP_ENCRYPTION_KEY must be a unique 64-hex value (no sample placeholder)")
+    if settings.sms_enabled:
+        problems.append("SMS_ENABLED must remain false in production until a written decision")
+    if settings.automated_delivery_enabled:
+        problems.append("AUTOMATED_DELIVERY_ENABLED must remain false in production")
+    if settings.update_allow_unsigned:
+        problems.append("unsigned updates are not allowed in production")
+    if settings.clamav_disabled:
+        problems.append("CLAMAV_DISABLED cannot be true in production")
+    if not settings.scan_fail_closed:
+        problems.append("SCAN_FAIL_CLOSED must be true in production")
+    if problems:
+        raise RuntimeError("insecure production configuration: " + "; ".join(problems))
 
 
 @lru_cache

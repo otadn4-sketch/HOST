@@ -70,6 +70,22 @@ def test_rejects_hash_mismatch(tmp_path: Path):
     assert not result.ok
 
 
+def test_rejects_unsigned_without_flag(tmp_path: Path):
+    root = tmp_path / "proj"
+    (root / "backend" / "app").mkdir(parents=True)
+    (root / "backend" / "app" / "hello.py").write_text("x = 1\n")
+    (root / "VERSION").write_text("1.1.0\n")
+    zpath = tmp_path / "src.zip"
+    with zipfile.ZipFile(zpath, "w") as zf:
+        zf.write(root / "VERSION", "HOST-folder/VERSION")
+        zf.write(root / "backend" / "app" / "hello.py", "HOST-folder/backend/app/hello.py")
+    dest = tmp_path / "out-src"
+    result = verify_and_extract(zpath, "", dest, allow_unsigned=False)
+    assert not result.ok
+    joined = " ".join(result.errors)
+    assert "manifest" in joined or "UPDATE_PUBLIC_KEY" in joined
+
+
 def test_accepts_nested_source_zip_without_manifest(tmp_path: Path):
     root = tmp_path / "proj"
     (root / "backend" / "app").mkdir(parents=True)
@@ -98,6 +114,6 @@ def test_nested_signed_manifest_is_found(tmp_path: Path):
         for info in src.infolist():
             dst.writestr("eytan-1.1.0/" + info.filename, src.read(info.filename))
     dest = tmp_path / "out-nested"
-    result = verify_and_extract(nested, sk.verify_key.encode().hex(), dest, allow_unsigned=True)
+    result = verify_and_extract(nested, sk.verify_key.encode().hex(), dest, allow_unsigned=False)
     assert result.ok, result.errors
     assert (dest / "frontend" / "index.html").exists()

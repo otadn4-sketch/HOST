@@ -3,8 +3,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session as DBSession
 
-from app.api.deps import get_current_user, get_db, require_any_admin, require_system_admin
-from app.config import get_settings
+from app.api.deps import get_db, require_any_admin, require_system_admin
+from app.config import get_settings, sms_outbound_allowed
 from app.models.entities import ExternalRecipient, FileObject, User
 from app.schemas import SmsConfigPatchIn, SmsSendIn
 from app.services.audit import write_audit
@@ -12,6 +12,16 @@ from app.services.policy import get_or_create_sms_settings
 from app.services.sms import send_sms_message, serialize_sms_config
 
 router = APIRouter(prefix="/api/sms", tags=["sms"])
+
+SMS_DISABLED_DETAIL = (
+    "ارسال پیامک و هر ارتباط خروجی تا تصمیم کتبی جدید غیرفعال است. "
+    "هیچ درخواستی به سرویس پیامک ارسال نشد."
+)
+
+
+def _require_sms_outbound() -> None:
+    if not sms_outbound_allowed():
+        raise HTTPException(status_code=403, detail=SMS_DISABLED_DETAIL)
 
 
 def _effective_config(db: DBSession, *, reveal: bool = False) -> dict:
@@ -39,8 +49,10 @@ def update_sms_config(
 ):
     settings = get_settings()
     row = get_or_create_sms_settings(db, settings)
+    if payload.enabled:
+        _require_sms_outbound()
     if payload.enabled is not None:
-        row.enabled = payload.enabled
+        row.enabled = bool(payload.enabled) and sms_outbound_allowed(settings)
     if payload.base_url is not None:
         row.base_url = payload.base_url.strip()
     if payload.api_key is not None and payload.api_key.strip() and "•" not in payload.api_key:
@@ -79,6 +91,7 @@ def update_sms_config(
 
 @router.get("/directory")
 def sms_directory(db: DBSession = Depends(get_db), user: User = Depends(require_any_admin)):
+    _require_sms_outbound()
     users = db.query(User).filter(User.status == "active").order_by(User.full_name.asc()).all()
     recipients = (
         db.query(ExternalRecipient)
@@ -107,6 +120,7 @@ def send_sms(
     db: DBSession = Depends(get_db),
     user: User = Depends(require_any_admin),
 ):
+    _require_sms_outbound()
     message = (payload.message or "").strip()
     if len(message) < 1:
         raise HTTPException(status_code=400, detail="متن پیامک خالی است.")

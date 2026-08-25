@@ -29,6 +29,7 @@ interface SidebarProps {
   onOpenUploadModal: () => void;
   mobileOpen?: boolean;
   onMobileClose?: () => void;
+  features?: { sms: boolean; graph: boolean; sharing: boolean };
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -38,6 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenUploadModal,
   mobileOpen = false,
   onMobileClose,
+  features = { sms: false, graph: false, sharing: false },
 }) => {
   const isAdmin = currentUser.role === 'system_admin';
   const isGroupAdmin = currentUser.role === 'group_admin';
@@ -51,7 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'transactions', label: 'ثبت دستی تحویل', icon: ClipboardList, visible: true },
     { id: 'meetings', label: 'ثبت جلسات و ارائه‌ها', icon: UsersRound, visible: true },
     { id: 'recipients', label: 'پروفایل مخاطبان', icon: Contact, visible: true },
-    { id: 'sms', label: 'پیامک و اطلاع‌رسانی', icon: Smartphone, visible: isAdmin || isGroupAdmin },
+    { id: 'sms', label: 'پیامک و اطلاع‌رسانی', icon: Smartphone, visible: Boolean(features.sms) && (isAdmin || isGroupAdmin) },
     { id: 'dashboard', label: 'داشبورد مدیریتی و آمار', icon: BarChart3, visible: isAdmin },
     { id: 'users_groups', label: 'مدیریت کاربران، واحدها و نقش‌ها', icon: Users, visible: isAdmin || isGroupAdmin },
   ];
@@ -60,8 +62,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'security_policies', label: 'سیاست‌ها، زیرساخت و پرامپت هوش', icon: ShieldCheck, visible: isAdmin },
     { id: 'system_update', label: 'به‌روزرسانی سامانه', icon: RefreshCw, visible: isAdmin },
     { id: 'audit_logs', label: 'لاگ رخدادها و ردگیری', icon: ScrollText, visible: isAdmin || isGroupAdmin },
-    { id: 'sharing', label: 'اشتراک‌گذاری و دسترسی دانه‌ای', icon: Share2, visible: isAdmin },
-    { id: 'graph', label: 'گراف محلی تعاملات', icon: GitFork, visible: isAdmin },
+    { id: 'sharing', label: 'اشتراک‌گذاری و دسترسی دانه‌ای', icon: Share2, visible: isAdmin && features.sharing },
+    { id: 'graph', label: 'گراف محلی تعاملات', icon: GitFork, visible: isAdmin && features.graph },
   ];
 
   const go = (view: string) => {

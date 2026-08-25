@@ -7,14 +7,14 @@
                                               |-- volume vault (خارج از web root)
                                               |-- volume quarantine
                                               |-- ClamAV TCP 3310
-[مدیر سامانه] --بسته امضاشده--> FastAPI staging --> [update-agent]
+[مدیر سامانه] --بسته امضاشده--> FastAPI staging --> نصب مستقیم / update-agent
 ```
 
 ## داده
 
 جداول عملیاتی: users, groups, sessions, files, file_permissions, audit_logs (append-only), security_policies, recovery_tokens, system_updates, maintenance_state, external_recipients, interaction_transactions, meeting_logs, share_links, document_scrub_jobs, faran_sync_records.
 
-ارسال خودکار لینک/فایل از طریق پیام‌رسان یا پیامک وجود ندارد؛ تحویل فقط با ثبت دستی تراکنش انجام می‌شود. گراف تعاملات فقط روی localhost در دسترس است.
+ارسال خودکار لینک/فایل از طریق پیام‌رسان یا پیامک در production وجود ندارد و تا تصمیم کتبی جدید نباید فعال شود. تحویل با ثبت دستی تراکنش انجام می‌شود (فایل، مخاطب، تاریخ، هدف، کانال، یادداشت). گراف تعاملات فقط روی localhost در دسترس است.
 
 مسیر فیزیکی فایل هرگز در JSON پاسخ نمی‌آید؛ فقط شناسه تصادفی `stored_vault_name`.
 
@@ -28,11 +28,12 @@
 - RBAC در سرور
 - بارگذاری streaming به قرنطینه، SHA-256، magic bytes، allowlist، سپس ClamAV، سپس انتقال اتمی به vault در صورت پاک بودن
 - Fail-closed اگر ClamAV در دسترس نباشد (`SCAN_FAIL_CLOSED`)
+- SMS با `sms_outbound_allowed`؛ در production همیشه False
 
 ## به‌روزرسانی
 
-بسته باید `manifest.json` با SHA-256 همه فایل‌ها و امضای Ed25519 داشته باشد. کلید خصوصی آفلاین است. update-agent فایل‌های `install.sh` و `docker-compose.yml` را رد می‌کند و کد دلخواه داخل ZIP را اجرا نمی‌کند.
+بسته باید `manifest.json` با SHA-256 همه فایل‌ها و امضای Ed25519 داشته باشد. کلید عمومی از `UPDATE_PUBLIC_KEY`. کلید خصوصی آفلاین است. بسته بدون manifest، hash یا امضا در production رد می‌شود. `install.sh` و `docker-compose.yml` داخل ZIP اجرا نمی‌شوند.
 
 ## هوش مصنوعی
 
-حذف شده. در صورت نیاز آینده فقط ماژول اختیاری مدل محلی با پیش‌فرض غیرفعال.
+گفت‌وگوی آزاد حذف شده (410). خلاصه‌سازی فایل در صورت پیکربندی باقی است.

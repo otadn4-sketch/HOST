@@ -8,7 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Re
 from sqlalchemy.orm import Session as DBSession
 
 from app.api.deps import get_db, require_system_admin
-from app.config import Settings, get_settings
+from app.config import Settings, get_settings, unsigned_updates_allowed
 from app.models.entities import MaintenanceState, SystemUpdate, User
 from app.services.audit import write_audit
 from app.services.files import stream_to_quarantine
@@ -68,7 +68,12 @@ async def upload_bundle(
     staging_file = settings.staging_path / staging_name
     size, digest = await stream_to_quarantine(file, staging_file, 200 * 1024 * 1024)
     extract_dir = settings.staging_path / f"extracted-{uuid.uuid4().hex}"
-    result = verify_and_extract(staging_file, settings.update_public_key, extract_dir, allow_unsigned=True)
+    result = verify_and_extract(
+        staging_file,
+        settings.update_public_key,
+        extract_dir,
+        allow_unsigned=unsigned_updates_allowed(settings),
+    )
     shutil.rmtree(extract_dir, ignore_errors=True)
     status = "validated" if result.ok else "rejected"
     update = SystemUpdate(
@@ -150,7 +155,12 @@ def confirm_update(
     try:
         if work.exists():
             shutil.rmtree(work, ignore_errors=True)
-        result = verify_and_extract(bundle, settings.update_public_key, work, allow_unsigned=True)
+        result = verify_and_extract(
+            bundle,
+            settings.update_public_key,
+            work,
+            allow_unsigned=unsigned_updates_allowed(settings),
+        )
         if not result.ok:
             raise RuntimeError("; ".join(result.errors) or "اعتبارسنجی بسته ناموفق بود.")
         notes = apply_extracted_release(work)

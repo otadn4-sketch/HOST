@@ -38,6 +38,33 @@ def test_ac12_manual_transaction_logging_and_search(client):
     )
     assert blocked.status_code == 400
 
+    blocked_whatsapp = client.post(
+        "/api/transactions",
+        headers=headers,
+        json={
+            "file_id": file_id,
+            "recipient_name": "نهاد ب",
+            "occurred_at": _iso(),
+            "purpose": "ارسال خودکار ممنوع",
+            "channel": "whatsapp",
+            "notes": "",
+        },
+    )
+    assert blocked_whatsapp.status_code == 400
+
+    missing_file = client.post(
+        "/api/transactions",
+        headers=headers,
+        json={
+            "recipient_name": "نهاد بدون فایل",
+            "occurred_at": _iso(),
+            "purpose": "باید فایل داشته باشد",
+            "channel": "handoff",
+            "notes": "یادداشت",
+        },
+    )
+    assert missing_file.status_code == 400
+
     created = client.post(
         "/api/transactions",
         headers=headers,
@@ -67,6 +94,12 @@ def test_ac12_manual_transaction_logging_and_search(client):
 
     filtered = client.get("/api/transactions", headers=headers, params={"purpose": "چاپی"})
     assert any(item["id"] == tx_id for item in filtered.json()["transactions"])
+
+    by_channel = client.get("/api/transactions", headers=headers, params={"channel": "handoff"})
+    assert any(item["id"] == tx_id for item in by_channel.json()["transactions"])
+    sms_channel = client.get("/api/transactions", headers=headers, params={"channel": "sms"})
+    assert sms_channel.status_code == 200
+    assert all(item["id"] != tx_id for item in sms_channel.json()["transactions"])
 
     recipients = client.get("/api/recipients", headers=headers)
     assert recipients.status_code == 200
@@ -100,8 +133,10 @@ def test_ac12_phases_faran_stub_and_graph_isolation(client):
     assert payload["automated_delivery_deprecated"] is True
     flags = {item["flag"]: item["enabled"] for item in payload["phases"]}
     assert flags["phase_1_archive_enabled"] is True
-    assert flags["phase_4_sharing_enabled"] is True
-    assert flags["phase_5_security_graph_enabled"] is True
+    assert flags["phase_4_sharing_enabled"] is False
+    assert flags["phase_5_security_graph_enabled"] is False
+    assert payload["sms_outbound_allowed"] is False
+    assert payload["graph_localhost_only"] is True
 
     faran = client.get("/api/faran/status", headers=headers)
     assert faran.status_code == 200
@@ -115,8 +150,18 @@ def test_ac12_phases_faran_stub_and_graph_isolation(client):
     assert shares.status_code in {403, 501}
 
     graph = client.get("/api/graph/relationships", headers=headers)
-    assert graph.status_code == 200
-    assert "graph" in graph.json()
+    assert graph.status_code == 403
+
+    from app.config import get_settings
+
+    settings = get_settings()
+    settings.phase_5_security_graph_enabled = True
+    public = client.get("/api/graph/relationships", headers={**headers, "Host": "files.example.org"})
+    assert public.status_code == 403
+    local = client.get("/api/graph/relationships", headers={**headers, "Host": "localhost"})
+    assert local.status_code == 200
+    assert "graph" in local.json()
+    settings.phase_5_security_graph_enabled = False
 
     meeting = client.post(
         "/api/meetings",

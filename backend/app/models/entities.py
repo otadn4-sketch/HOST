@@ -368,18 +368,20 @@ class ShareLink(Base):
 
 
 class DocumentScrubJob(Base):
-    """Phase 5 placeholder: metadata/content scrub before upload or share."""
+    """Document scrub jobs. Unsupported types fail closed and do not claim success."""
 
     __tablename__ = "document_scrub_jobs"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     file_id: Mapped[str] = mapped_column(ForeignKey("files.id"), nullable=False, index=True)
-    status: Mapped[str] = mapped_column(String(32), default="stub", index=True)
+    status: Mapped[str] = mapped_column(String(32), default="pending", index=True)
     rules: Mapped[list[str]] = mapped_column(JSON, default=list)
     notes: Mapped[str] = mapped_column(Text, default="")
     created_by: Mapped[str] = mapped_column(String(36), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    result_file_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    redacted_count: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class FaranSyncRecord(Base):

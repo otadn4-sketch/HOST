@@ -134,6 +134,10 @@ def create_transaction(
     require_phase("phase_1_archive_enabled", "فاز ۱ (بایگانی و ثبت دستی) فعال نیست.")
     if not can_upload(user):
         raise HTTPException(status_code=403, detail="مجوز ثبت تراکنش ندارید.")
+    if not (payload.file_id or "").strip():
+        raise HTTPException(status_code=400, detail="ثبت تحویل فایل نیازمند انتخاب فایل است.")
+    if not (payload.recipient_id or (payload.recipient_name or "").strip()):
+        raise HTTPException(status_code=400, detail="ثبت تحویل نیازمند مخاطب است.")
     channel = (payload.channel or "handoff").strip().lower()
     if channel in BLOCKED_CHANNELS or channel not in ALLOWED_CHANNELS:
         raise HTTPException(

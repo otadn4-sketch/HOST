@@ -56,6 +56,14 @@ export const TransactionLogView: React.FC<Props> = ({ currentUser, files, initia
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!canWrite) return;
+    if (!form.file_id) {
+      setError('انتخاب فایل برای ثبت تحویل الزامی است.');
+      return;
+    }
+    if (!form.recipient_name.trim()) {
+      setError('نام مخاطب الزامی است.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
@@ -105,7 +113,7 @@ export const TransactionLogView: React.FC<Props> = ({ currentUser, files, initia
                 value={form.file_id}
                 onChange={(e) => setForm({ ...form, file_id: e.target.value })}
               >
-                <option value="">بدون اتصال به فایل</option>
+                <option value="">انتخاب فایل (الزامی)</option>
                 {files.map((file) => (
                   <option key={file.id} value={file.id}>
                     {file.title}

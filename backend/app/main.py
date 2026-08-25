@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api import ai, auth, dashboard, faran, files, graph, groups, health, logs, meetings, phases, recipients, roles, scrub, settings as settings_api, shares, sms, transactions, updates, users
-from app.config import get_settings
+from app.config import apply_production_locks, get_settings, validate_runtime_settings
 from app.db import Base, make_engine, make_session_factory
 from app.models import entities  # noqa: F401
 from app.services.bootstrap import bootstrap_schema, seed_dev_users
@@ -34,6 +34,8 @@ def create_app(overrides: dict | None = None) -> FastAPI:
     if overrides:
         for key, value in overrides.items():
             setattr(settings, key, value)
+    apply_production_locks(settings)
+    validate_runtime_settings(settings)
 
     app = FastAPI(title="سامانه اشتراک‌گذاری فایل شبکه کانون‌های تفکر ایران «ایتان»", docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(SecurityHeadersMiddleware)

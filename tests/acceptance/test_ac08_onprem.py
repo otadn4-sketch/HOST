@@ -13,5 +13,7 @@ def test_ac08_onprem_layout():
     assert "nginx" in compose
     env = (root / ".env.example").read_text()
     assert "GEMINI" not in env
+    assert "SMS_ENABLED=false" in env
+    assert "BOOTSTRAP_ADMIN_PASSWORD" not in env
     readme = (root / "README.md").read_text()
     assert "docker compose" in readme.lower() or "bootstrap" in readme

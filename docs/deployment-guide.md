@@ -2,7 +2,27 @@
 
 ## پیش‌نیاز
 
-لینوکس، Docker Engine، Docker Compose v2، حداقل پیشنهادی شیت: ۲ vCPU / ۴GB RAM / ۱۰۰GB SSD (ظرفیت نهایی با کارفرما).
+لینوکس، Docker Engine، Docker Compose v2، حداقل پیشنهادی: ۲ vCPU / ۴GB RAM / ۱۰۰GB SSD (ظرفیت نهایی با کارفرما).
+
+## پیکربندی نمونه
+
+`.env.example` با `docker-compose.yml` هم‌خوان است و رمز/کلید قابل‌استفاده ندارد. `./scripts/bootstrap.sh` در صورت نبود `.env` آن را کپی می‌کند و مقدارهای `change-me-with-a-long-random-value` و `change-me-64-hex-chars` را با مقدار تصادفی عوض می‌کند.
+
+در production این موارد اجباری‌اند و مقدار نمونه پذیرفته نمی‌شود:
+
+- `SESSION_SECRET` (حداقل ۳۲ نویسه، غیرنمونه)
+- `DATABASE_URL` / `POSTGRES_PASSWORD` (غیر از `eytan:eytan` و `change-me-*`)
+- `BACKUP_ENCRYPTION_KEY` (۶۴ رقم hex منحصربه‌فرد)
+- `SCAN_FAIL_CLOSED=true`
+- `SMS_ENABLED=false` و `AUTOMATED_DELIVERY_ENABLED=false`
+
+`UPDATE_PUBLIC_KEY` برای نصب بسته به‌روزرسانی لازم است؛ بدون آن بسته رد می‌شود.
+
+بررسی پیکربندی Compose (داده موجود را پاک نمی‌کند):
+
+```bash
+docker compose --env-file .env.example config
+```
 
 ## اعمال سورس (zip گیت‌هاب یا git pull)
 
@@ -56,8 +76,11 @@ docker compose up -d --build
 
 ## Health
 
-- `/api/health` از Nginx
+- `/api/health` از Nginx یا loopback بک‌اند
 - `/api/ready` برای پایگاه و ClamAV
+- `./scripts/healthcheck.sh`
+
+ارسال پیامک و گراف عمومی بخشی از health production نیستند و نباید فعال باشند.
 
 ## اسرار
 

@@ -21,7 +21,7 @@ def test_faran_client_is_offline_stub():
     assert ping["ok"] is False
 
 
-def test_document_scrub_plan_is_stub():
+def test_document_scrub_plan_is_fail_safe():
     plan = plan_scrub(["strip_recipient_details"])
     assert plan["applied"] is False
-    assert plan["status"] == "stub"
+    assert plan["status"] == "planned"

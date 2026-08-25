@@ -293,16 +293,15 @@ def verify_and_extract(
 
             signature = (manifest or {}).get("signature") or ""
             key = (public_key or "").strip()
-            if signature and key:
-                try:
-                    vk = parse_public_key(key)
-                    vk.verify(
-                        _canonical_manifest(manifest),
-                        bytes.fromhex(signature) if len(signature) == 128 else __import__("base64").b64decode(signature),
-                    )
-                except (BadSignatureError, Exception) as exc:
-                    errors.append(f"invalid Ed25519 signature: {exc}")
-            elif not allow_unsigned:
+            if allow_unsigned and not signature:
+                pass
+            elif not key:
+                errors.append("UPDATE_PUBLIC_KEY is not configured")
+            elif not signature:
+                errors.append("manifest signature missing")
+            elif not manifest:
+                errors.append("manifest.json missing or invalid")
+            else:
                 try:
                     vk = parse_public_key(key)
                     vk.verify(

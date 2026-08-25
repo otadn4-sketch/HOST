@@ -1,3 +1,7 @@
+from unittest.mock import patch
+
+from app.config import get_settings
+from app.services.scanner import ClamAVError
 from tests.conftest import auth_header, login, seed_user
 
 
@@ -57,3 +61,38 @@ def test_ac03_upload_validation_and_quarantine(client):
         data={"title": "حجم زیاد", "topic": "آزمون"},
     )
     assert huge.status_code == 413
+
+    traversal = client.post(
+        "/api/files",
+        headers=h,
+        files={"file": ("../../etc/passwd.txt", b"safe-text\n", "text/plain")},
+        data={"title": "نام ناامن", "topic": "آزمون", "classification": "internal"},
+    )
+    assert traversal.status_code == 200, traversal.text
+    stored = traversal.json()["file"]
+    assert ".." not in (stored.get("stored_vault_name") or "")
+    assert "/" not in (stored.get("stored_vault_name") or "")
+    assert stored.get("original_name") in {"passwd.txt", ""}
+
+
+def test_ac03_scan_fail_closed_quarantines(client):
+    seed_user("alice", "user", email="alice@eytan.local")
+    login(client, "alice")
+    h = auth_header(client)
+    settings = get_settings()
+    settings.clamav_disabled = False
+    settings.scan_fail_closed = True
+    with patch("app.services.files.scan_file", side_effect=ClamAVError("clamd down")):
+        up = client.post(
+            "/api/files",
+            headers=h,
+            files={"file": ("ok.txt", "سلام سند\n".encode("utf-8"), "text/plain")},
+            data={"title": "بدون پویش", "topic": "آزمون", "classification": "internal"},
+        )
+    assert up.status_code == 200, up.text
+    body = up.json()["file"]
+    assert body["scan_status"] == "quarantined"
+    dl = client.get(f"/api/files/{body['id']}/download", headers=h)
+    assert dl.status_code in {403, 404}
+    settings.clamav_disabled = True
+    settings.scan_fail_closed = False

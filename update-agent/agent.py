@@ -59,7 +59,7 @@ def install(payload: InstallIn, x_update_token: str | None = Header(default=None
     work = STAGING / f"install-{payload.update_id}"
     if work.exists():
         shutil.rmtree(work)
-    result = verify_and_extract(bundle, PUBLIC_KEY, work, allow_unsigned=True)
+    result = verify_and_extract(bundle, PUBLIC_KEY, work, allow_unsigned=False)
     if not result.ok:
         return {"ok": False, "error": "; ".join(result.errors), "rolled_back": False}
 

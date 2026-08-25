@@ -236,8 +236,12 @@ def ingest_file(
                 scan_status = "quarantined"
                 quarantine_reason = f"شناسایی بدافزار: {result.signature}"
         except ClamAVError as exc:
-            scan_status = "suspicious"
-            quarantine_reason = f"پویش بدافزار در دسترس نبود ({exc})"
+            if settings.scan_fail_closed:
+                scan_status = "quarantined"
+                quarantine_reason = f"پویش بدافزار در دسترس نبود؛ فایل امن تلقی نشد ({exc})"
+            else:
+                scan_status = "suspicious"
+                quarantine_reason = f"پویش بدافزار در دسترس نبود ({exc})"
 
     if scan_status in {"clean", "suspicious"}:
         rel = stored_name

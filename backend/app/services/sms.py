@@ -5,7 +5,7 @@ from urllib.parse import quote, urlencode
 
 import httpx
 
-from app.config import Settings, get_settings
+from app.config import Settings, get_settings, sms_outbound_allowed
 from app.models.entities import SmsSettings
 
 
@@ -29,8 +29,16 @@ def apply_template(template: str, mapping: dict[str, str]) -> str:
 def serialize_sms_config(row: SmsSettings, settings: Settings | None = None, *, reveal: bool = False) -> dict[str, Any]:
     settings = settings or get_settings()
     api_key = row.api_key or settings.sms_api_key
+    outbound = sms_outbound_allowed(settings)
     return {
-        "enabled": bool(row.enabled or settings.sms_enabled),
+        "enabled": False if not outbound else bool(row.enabled and settings.sms_enabled),
+        "outbound_allowed": outbound,
+        "feature_flag": bool(settings.sms_enabled) and outbound,
+        "production_locked": settings.is_production,
+        "note": (
+            "ارسال پیامک و هر ارتباط خروجی تا تصمیم کتبی جدید در production غیرفعال است. "
+            "ثبت دستی تحویل یک قابلیت جدا است و جایگزین پیامک نمی‌شود."
+        ),
         "base_url": row.base_url or settings.sms_base_url,
         "api_key_set": bool(api_key),
         "api_key_masked": api_key if reveal else mask_secret(api_key),
@@ -57,6 +65,12 @@ def send_sms_message(
     to: str,
     text: str,
 ) -> dict[str, Any]:
+    if not sms_outbound_allowed():
+        return {
+            "ok": False,
+            "error": "ارسال پیامک در این نسخه غیرفعال است و هیچ درخواست شبکه‌ای ارسال نشد.",
+            "status_code": 0,
+        }
     phone = (to or "").strip()
     message = (text or "").strip()
     if not phone or not message:

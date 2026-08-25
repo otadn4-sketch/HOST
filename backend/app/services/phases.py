@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import HTTPException, Request
 
-from app.config import Settings, get_settings
+from app.config import Settings, get_settings, sms_outbound_allowed
 
 PHASE_CATALOG = [
     {
@@ -30,14 +30,14 @@ PHASE_CATALOG = [
         "id": 4,
         "code": "sharing",
         "title": "اشتراک‌گذاری و کنترل دسترسی دانه‌ای",
-        "summary": "پیوند امن و RBAC داخلی/خارجی. تا فعال‌سازی پرچم خاموش است.",
+        "summary": "پیوند امن و RBAC داخلی/خارجی. تا تصمیم کتبی خاموش است.",
         "flag": "phase_4_sharing_enabled",
     },
     {
         "id": 5,
         "code": "security_graph",
         "title": "امنیت، پالایش سند و گراف محلی",
-        "summary": "آمادگی آزمون نفوذ، پالایش PDF/Word، گراف تعاملات فقط روی localhost.",
+        "summary": "پالایش سند با fail-safe؛ گراف تعاملات فقط روی localhost و خارج از وب عمومی.",
         "flag": "phase_5_security_graph_enabled",
     },
 ]
@@ -53,9 +53,12 @@ def phase_status(settings: Settings | None = None) -> dict:
         "product_mode": "manual_logging_archive",
         "automated_delivery_enabled": False,
         "automated_delivery_deprecated": True,
+        "sms_enabled": False if settings.is_production else bool(settings.sms_enabled),
+        "sms_outbound_allowed": sms_outbound_allowed(settings),
+        "graph_localhost_only": True,
         "automated_delivery_note": (
-            "ارسال خودکار لینک یا فایل از طریق پیام‌رسان و پیامک منسوخ و غیرفعال است. "
-            "تحویل فقط به‌صورت ثبت دستی انجام می‌شود."
+            "ارسال خودکار لینک یا فایل از طریق پیام‌رسان و پیامک منسوخ است و در production "
+            "تا تصمیم کتبی جدید غیرفعال می‌ماند. سامانه فقط ثبت دستی می‌کند: فایل، مخاطب، تاریخ، هدف، کانال، یادداشت."
         ),
         "phases": phases,
         "faran": {
@@ -74,12 +77,20 @@ def require_phase(flag_name: str, message: str) -> None:
 
 
 def is_loopback_request(request: Request) -> bool:
+    settings = get_settings()
     host = (request.headers.get("host") or "").split(":")[0].lower()
-    if host not in {"localhost", "127.0.0.1", "::1"}:
+    loopback_hosts = {"localhost", "127.0.0.1", "::1"}
+    if not settings.is_production:
+        loopback_hosts.add("testserver")
+    if host not in loopback_hosts:
         return False
     forwarded = (request.headers.get("x-forwarded-host") or "").split(",")[0].strip().split(":")[0].lower()
-    if forwarded and forwarded not in {"localhost", "127.0.0.1", "::1"}:
+    if forwarded and forwarded not in loopback_hosts:
         return False
+    if settings.is_production:
+        forwarded_for = (request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
+        if forwarded_for and forwarded_for not in {"127.0.0.1", "::1", "localhost"}:
+            return False
     return True
 
 

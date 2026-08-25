@@ -92,3 +92,10 @@ def ensure_runtime_schema(db: DBSession) -> None:
             db.execute(text(stmt))
         if statements:
             db.flush()
+    if "document_scrub_jobs" in tables:
+        scrub_cols = {c["name"] for c in insp.get_columns("document_scrub_jobs")}
+        if "result_file_id" not in scrub_cols:
+            db.execute(text("ALTER TABLE document_scrub_jobs ADD COLUMN result_file_id VARCHAR(36)"))
+        if "redacted_count" not in scrub_cols:
+            db.execute(text("ALTER TABLE document_scrub_jobs ADD COLUMN redacted_count INTEGER DEFAULT 0"))
+        db.flush()
